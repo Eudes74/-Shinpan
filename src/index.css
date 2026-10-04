@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color-scheme: dark; background: #0a1020; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
+::selection { background: #6366f1; color: white; }
+
+@layer components {
+  .eyebrow { @apply inline-flex items-center gap-2 text-xs font-extrabold tracking-[.2em] text-indigo-400; }
+  .eyebrow::before { content: ''; @apply h-1.5 w-1.5 rounded-full bg-indigo-400; }
+  .field { @apply block min-h-12 w-full rounded-xl border border-line bg-[#0b1424] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/15; }
+  select.field { @apply cursor-pointer; }
+  .primary-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/40 transition-all hover:bg-indigo-400 active:scale-[.98]; }
+  .secondary-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-panel px-5 py-3 text-sm font-bold text-slate-200 transition-all hover:bg-slate-800 active:scale-[.98]; }
+  .feature { @apply flex items-center gap-4 rounded-xl border border-line/70 bg-panel/60 p-4; }
+  .feature-icon { @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400; }
+  .tab-button { @apply inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent px-4 text-sm font-semibold text-slate-400 transition-colors hover:bg-slate-800 hover:text-white data-[state=active]:border-indigo-400/40 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-200; }
+  .error-card { @apply flex min-h-[172px] rounded-2xl border border-line bg-panel p-4 transition-all duration-150 sm:p-5; }
+  .error-card.is-active { @apply border-indigo-400/40 bg-[#172239] shadow-glow; }
+  .severity-grave.is-active { @apply border-rose-500/50; }
+  .severity-medio.is-active { @apply border-orange-400/50; }
+  .severity-leve.is-active { @apply border-amber-400/50; }
+  .severity-tag { @apply rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider; }
+  .severity-tag-grave { @apply border-rose-500/25 bg-rose-500/10 text-rose-400; }
+  .severity-tag-medio { @apply border-orange-400/25 bg-orange-400/10 text-orange-400; }
+  .severity-tag-leve { @apply border-amber-400/25 bg-amber-400/10 text-amber-300; }
+  .counter-button { @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border transition-all active:scale-90 disabled:opacity-35 disabled:active:scale-100; }
+  .counter-minus { @apply border-line bg-[#0b1424] text-slate-300 hover:bg-slate-700; }
+  .counter-plus { @apply border-indigo-400/40 bg-indigo-500/20 text-indigo-200 hover:bg-indigo-500/40; }
+  .veto-badge { @apply inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/15 px-3 py-1.5 text-[11px] font-bold text-rose-300 animate-pulse sm:text-xs; }
+  .summary-tile { @apply rounded-2xl border border-line bg-panel p-5; }
+}
