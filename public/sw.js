@@ -1,4 +1,4 @@
-const CACHE = 'shinpan-offline-v2';
+const CACHE = 'shinpan-offline-v3';
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

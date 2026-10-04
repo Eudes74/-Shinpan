@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Activity, ArrowLeft, ArrowRight, ChevronRight, ClipboardCheck, Flag, Info, MapPin, Minus, Plus, RotateCcw, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowRight, ChevronRight, ClipboardCheck, Flag, Info, MapPin, Minus, Plus, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { categories, errors, groups, points, severityLabels, type Category, type ErrorItem, type GroupId } from './data/errors';
+import { getResult } from './data/report';
+import Report from './components/Report';
 
 const storageKey = 'shinpan-avaliacao-v1';
 type Form = { candidate: string; federation: string; current: Category; target: Category; evaluator: string; event: string; tatami: string };
@@ -40,9 +42,7 @@ export default function App() {
   const { screen, form, counts, notes, activeTab } = session;
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(session)); } catch { /* armazenamento indisponível */ } }, [session]);
   const count = (item: ErrorItem) => counts[item.id] ?? 0;
-  const score = Math.max(0, 100 - errors.reduce((sum, item) => sum + count(item) * points[item.severity], 0));
-  const totalErrors = errors.reduce((sum, item) => sum + count(item), 0);
-  const veto = errors.some(item => item.safety && count(item) > 0) || errors.filter(item => item.group === 'regras' && item.severity === 'grave').reduce((sum, item) => sum + count(item), 0) >= 2;
+  const { score, total: totalErrors, veto } = getResult(form, counts);
   const updateForm = (key: keyof Form, value: string) => setSession(prev => ({ ...prev, form: { ...prev.form, [key]: value } }));
   const updateCount = (id: string, delta: number) => setSession(prev => ({ ...prev, counts: { ...prev.counts, [id]: Math.max(0, (prev.counts[id] ?? 0) + delta) } }));
   const start = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (form.candidate.trim()) setSession(prev => ({ ...prev, form: { ...prev.form, candidate: prev.form.candidate.trim() }, screen: 'live' })); };
@@ -61,14 +61,6 @@ export default function App() {
         <section className="mt-9 rounded-2xl border border-line bg-panel p-5 sm:p-7"><div className="mb-3 flex items-center gap-2"><ClipboardCheck size={18} className="text-indigo-400" /><label htmlFor="notes" className="text-sm font-bold text-white">Observações rápidas</label></div><textarea id="notes" rows={3} value={notes} onChange={event => setSession(prev => ({ ...prev, notes: event.target.value }))} placeholder="Ex.: Revisão de Care System no minuto 02:40..." className="field min-h-[100px] resize-y" /><p className="mt-2 text-xs text-slate-500">As anotações são salvas automaticamente neste dispositivo.</p></section><div className="mt-7 flex flex-wrap items-center justify-between gap-4"><span className="flex items-center gap-2 text-xs text-slate-500"><MapPin size={15} /> Tatame {form.tatami} {form.event && `· ${form.event}`}</span><button type="button" onClick={finish} className="primary-button w-full sm:w-auto">Encerrar luta / Finalizar avaliação <Flag size={18} /></button></div>
       </main>
     </>}
-    {screen === 'finished' && <>
-      <header className="border-b border-line bg-[#0d1627]"><div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-5 sm:px-8"><Brand /><span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200">Avaliação encerrada</span></div></header>
-      <main className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-20"><span className="eyebrow">REGISTRO SALVO NESTE DISPOSITIVO</span><h1 className="mt-4 text-3xl font-extrabold text-white sm:text-4xl">Avaliação encerrada</h1><p className="mt-3 text-slate-400">Confira o registro antes de iniciar uma nova avaliação. A devolutiva completa estará disponível na próxima etapa.</p>
-        <div className="mt-9 grid gap-3 sm:grid-cols-3"><div className="summary-tile sm:col-span-2"><p className="text-xs uppercase tracking-widest text-slate-400">Candidato</p><p className="mt-2 text-xl font-bold text-white">{form.candidate}</p><p className="mt-1 text-sm text-slate-400">{form.target} · Tatame {form.tatami}</p></div><div className="summary-tile"><p className="text-xs uppercase tracking-widest text-slate-400">Pontuação</p><p className="mt-2 text-4xl font-black tabular-nums text-white">{score}<span className="text-base text-slate-500"> / 100</span></p></div></div>
-        {veto && <p className="veto-badge mt-5"><ShieldAlert size={16} />Critério de Veto Atingido</p>}
-        <div className="mt-6 rounded-2xl border border-line bg-panel p-5 sm:p-7"><h2 className="text-lg font-bold text-white">Ocorrências registradas <span className="ml-1 text-indigo-400">({totalErrors})</span></h2>{totalErrors ? <ul className="mt-4 divide-y divide-line">{errors.filter(item => count(item) > 0).map(item => <li key={item.id} className="flex items-start justify-between gap-4 py-3 text-sm text-slate-300"><span>{item.label}</span><span className="shrink-0 font-bold text-white">×{count(item)}</span></li>)}</ul> : <p className="mt-4 text-sm text-slate-400">Nenhuma ocorrência registrada.</p>}{notes && <div className="mt-5 border-t border-line pt-5"><p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Observações</p><p className="whitespace-pre-wrap text-sm text-slate-300">{notes}</p></div>}</div>
-        <div className="mt-7 flex flex-wrap gap-3"><button type="button" onClick={() => setSession(prev => ({ ...prev, screen: 'live' }))} className="secondary-button"><ArrowLeft size={18} /> Retomar avaliação</button><button type="button" onClick={reset} className="primary-button"><RotateCcw size={18} /> Nova avaliação</button></div>
-      </main>
-    </>}
+    {screen === 'finished' && <Report form={form} counts={counts} notes={notes} onResume={() => setSession(prev => ({ ...prev, screen: 'live' }))} onReset={reset} />}
   </div>;
 }

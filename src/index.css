@@ -35,4 +35,29 @@ button:disabled { cursor: not-allowed; }
   .counter-plus { @apply border-indigo-400/40 bg-indigo-500/20 text-indigo-200 hover:bg-indigo-500/40; }
   .veto-badge { @apply inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/15 px-3 py-1.5 text-[11px] font-bold text-rose-300 animate-pulse sm:text-xs; }
   .summary-tile { @apply rounded-2xl border border-line bg-panel p-5; }
+  .report-outcome { @apply rounded-2xl border p-5 sm:p-7; }
+  .report-outcome-approved { @apply border-emerald-500/40 bg-emerald-500/10; }
+  .report-outcome-retest { @apply border-amber-400/40 bg-amber-400/10; }
+  .report-outcome-failed { @apply border-rose-500/40 bg-rose-500/10; }
+  .report-status { @apply inline-flex rounded-lg border px-3 py-2 text-sm font-black tracking-wide; }
+  .report-status-approved { @apply border-emerald-400/40 bg-emerald-400/15 text-emerald-300; }
+  .report-status-retest { @apply border-amber-400/40 bg-amber-400/15 text-amber-300; }
+  .report-status-failed { @apply border-rose-400/40 bg-rose-400/15 text-rose-300; }
+  .report-label { @apply text-xs font-bold uppercase tracking-widest text-slate-400; }
+  .report-metric { @apply flex flex-col gap-1 rounded-xl border border-line bg-[#0b1424] px-3 py-3 text-slate-400; }
+  .report-metric strong { @apply text-base font-bold text-white; }
+}
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  :root { color-scheme: light; background: white; }
+  body, #root, #root > div { background: white !important; color: #172033 !important; }
+  .no-print { display: none !important; }
+  .report-print { max-width: none; padding: 0 !important; }
+  .report-print .grid { gap: 8px !important; }
+  .report-print .summary-tile, .report-print .report-metric, .report-print li { break-inside: avoid; }
+  .report-print section, .report-print .summary-tile, .report-print .report-metric, .report-print .report-score { background: white !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; }
+  .report-print p, .report-print span, .report-print strong, .report-print h1, .report-print h2, .report-print li { color: #172033 !important; }
+  .report-print .report-status { border: 1px solid #64748b !important; background: white !important; }
+  .report-print .eyebrow::before { background: #475569 !important; }
 }
