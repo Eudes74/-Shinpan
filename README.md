@@ -9,9 +9,9 @@ Instale as dependências com `npm install` e inicie o servidor com `npm run dev`
 ## Funcionalidades atuais
 
 - Identificação do candidato, categoria, avaliador, evento e tatame.
-- Ficha densa com 20 combates fixos (01–20), função única Central/Lateral/Vídeo, dedução por luta e visto do avaliador.
-- Códigos L1–L3, G1–G4 e GG1–GG4 com marcação individual; médias acumuladas por critério: Shido (M2, 0–5), Waza-ari (M1, 0–3), Mate (M3, 0–3) e Replay (M4, 0–3). Nas médias, selecionar um número define a quantidade; selecionar novamente o mesmo número zera o critério.
-- Resumo em tempo real com pontuação, contadores por gravidade e alerta de Reprovação Automática quando GG ≥ 2.
+- Visão geral dos 20 combates fixos (01–20), com função Central/Lateral/Vídeo, botão de adicionar falha, tags com os nomes das infrações, dedução por luta e visto do avaliador. Em telas pequenas, cada luta é apresentada como um cartão.
+- Seleção rápida por nome em um modal com quatro blocos: leves (azul, −2), médias (amarelo, −5), graves (laranja, −10) e gravíssimas (vermelho, −20). Um toque registra a ocorrência e fecha o modal. Infrações repetidas são acumuladas, sem o limite antigo por critério; o × da tag remove uma ocorrência.
+- Painel superior em tempo real com pontuação e contadores por gravidade. Um banner vermelho fixo informa Reprovação Automática ao atingir duas ou mais faltas gravíssimas no total da avaliação.
 - Finalização liberada somente após definir a função e dar o visto nos 20 combates, mesmo nos combates sem faltas; alterações nas faltas ou na função retiram o visto da linha.
 - Relatório com a ficha completa, ocorrências por combate e possibilidade de retomar ou iniciar outra avaliação.
 - Impressão do relatório ou salvamento em PDF pela janela de impressão do navegador; resumo formatado para compartilhamento pelo WhatsApp (requer internet).

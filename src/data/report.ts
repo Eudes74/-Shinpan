@@ -1,4 +1,4 @@
-import { errors, points, fightTotal, aggregateCounts, isComplete, type Category, type Fight } from './errors';
+import { errors, points, fightTotal, roleLabels, aggregateCounts, isComplete, type Category, type Fight } from './errors';
 
 export type ReportForm = {
   candidate: string;
@@ -44,11 +44,11 @@ export function shareSummary(form: ReportForm, result: Result, notes: string, fi
     `Pontuação: ${result.score} (100 − ${result.deduction})`,
     `Combates validados: ${result.validated}/${fightTotal}`,
     `Leves: ${result.light} | Médias: ${result.medium} | Graves: ${result.grave} | Gravíssimas: ${result.gravissimo}`,
-    `Reprovação automática (GG ≥ 2): ${result.veto ? 'Sim' : 'Não'}`,
-    'Registro por combate (C: Central; L: Lateral; V: Vídeo):',
+    `Reprovação automática (2+ faltas gravíssimas): ${result.veto ? 'Sim' : 'Não'}`,
+    'Registro por combate:',
     ...fights.map(fight => {
-      const entries = errors.filter(item => fight.counts[item.id]).map(item => `${item.id} ×${fight.counts[item.id]}`).join(', ');
-      return `Luta ${String(fight.number).padStart(2, '0')} | ${fight.role || 'Sem função'} | ${entries || 'Sem faltas registradas'} | Visto: ${fight.verified ? 'Sim' : 'Pendente'}`;
+      const entries = errors.filter(item => fight.counts[item.id]).map(item => `${item.label} ×${fight.counts[item.id]}`).join('; ');
+      return `Luta ${String(fight.number).padStart(2, '0')} | ${fight.role ? roleLabels[fight.role] : 'Sem função'} | ${entries || 'Sem faltas registradas'} | Visto: ${fight.verified ? 'Sim' : 'Pendente'}`;
     }),
     'Duas ou mais faltas gravíssimas implicam reprovação automática. A pontuação, isoladamente, não define aprovação nesta ficha.',
   ];
