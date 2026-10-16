@@ -9,23 +9,31 @@ export const groups: { id: GroupId; label: string }[] = [
   { id: 'posicionamento', label: 'Posicionamento' },
   { id: 'seguranca', label: 'Segurança dos atletas' },
 ];
-export const errors: ErrorItem[] = [
-  { id: 'L1', severity: 'leve', group: 'posicionamento', label: 'Posicionamento / Linha de visão cega' },
-  { id: 'L2', severity: 'leve', group: 'gestual', label: 'Gestual ou comando de voz impreciso / Hesitação' },
-  { id: 'L3', severity: 'leve', group: 'regras', label: 'Demora na consulta ao Vídeo Replay' },
-  { id: 'M1', severity: 'medio', group: 'regras', label: 'Erro de Waza-ari (atribuição ou omissão)' },
-  { id: 'M2', severity: 'medio', group: 'regras', label: 'Aplicação indevida ou omissão de Shido' },
-  { id: 'M3', severity: 'medio', group: 'regras', label: 'Interrupção indevida ou Mate tardio' },
-  { id: 'M4', severity: 'medio', group: 'regras', label: 'Solicitação desnecessária de Vídeo Replay' },
-  { id: 'G1', severity: 'grave', group: 'regras', label: 'Inversão de pontuação (atribuir ao atleta errado)' },
-  { id: 'G2', severity: 'grave', group: 'regras', label: 'Divergência de tempo/placar ou reinício sem alinhamento' },
-  { id: 'G3', severity: 'grave', group: 'regras', label: 'Omissão de checagem de Vídeo Replay em lance crítico' },
-  { id: 'G4', severity: 'grave', group: 'regras', label: 'Desalinhamento injustificado entre Central e Vídeo' },
-  { id: 'GG1', severity: 'gravissimo', group: 'regras', label: 'Ippon inexistente ou omitido' },
-  { id: 'GG2', severity: 'gravissimo', group: 'seguranca', safety: true, label: 'Falha grave de segurança dos atletas (sem Mate imediato)' },
-  { id: 'GG3', severity: 'gravissimo', group: 'seguranca', safety: true, label: 'Omissão de Hansoku-make direto (ação perigosa)' },
-  { id: 'GG4', severity: 'gravissimo', group: 'regras', label: 'Ignorar correção mandatória do Vídeo Replay' },
-];
+export const CRITERIOS = [
+  { id: 'L1', categoria: 'LEVE', pontos: 2, label: 'Posicionamento inadequado / Linha de visão cega' },
+  { id: 'L2', categoria: 'LEVE', pontos: 2, label: 'Gestual ou comando de voz impreciso / Hesitação' },
+  { id: 'L3', categoria: 'LEVE', pontos: 2, label: 'Demora ou hesitação na consulta ao Vídeo Replay' },
+  { id: 'M1', categoria: 'MEDIA', pontos: 5, label: 'Erro de Waza-ari (atribuição indevida ou omissão)' },
+  { id: 'M2', categoria: 'MEDIA', pontos: 5, label: 'Aplicação indevida ou omissão de Shido' },
+  { id: 'M3', categoria: 'MEDIA', pontos: 5, label: 'Interrupção indevida ou Mate tardio' },
+  { id: 'M4', categoria: 'MEDIA', pontos: 5, label: 'Solicitação desnecessária de Vídeo Replay em lance claro' },
+  { id: 'G1', categoria: 'GRAVE', pontos: 10, label: 'Inversão de pontuação (atribuir ponto ao atleta errado)' },
+  { id: 'G2', categoria: 'GRAVE', pontos: 10, label: 'Divergência de tempo/placar ou reinício sem alinhamento' },
+  { id: 'G3', categoria: 'GRAVE', pontos: 10, label: 'Omissão de checagem no Vídeo Replay em lance crítico' },
+  { id: 'G4', categoria: 'GRAVE', pontos: 10, label: 'Desalinhamento injustificado entre Central e Mesa de Vídeo' },
+  { id: 'GG1', categoria: 'GRAVISSIMA', pontos: 20, label: 'Ippon inexistente ou omitido' },
+  { id: 'GG2', categoria: 'GRAVISSIMA', pontos: 20, label: 'Falha grave de segurança dos atletas (sem Mate imediato)' },
+  { id: 'GG3', categoria: 'GRAVISSIMA', pontos: 20, label: 'Omissão de Hansoku-make direto' },
+  { id: 'GG4', categoria: 'GRAVISSIMA', pontos: 20, label: 'Ignorar correção mandatória do Vídeo Replay' },
+] as const;
+const categorySeverity: Record<typeof CRITERIOS[number]['categoria'], Severity> = { LEVE: 'leve', MEDIA: 'medio', GRAVE: 'grave', GRAVISSIMA: 'gravissimo' };
+export const errors: ErrorItem[] = CRITERIOS.map(item => ({
+  id: item.id,
+  label: item.label,
+  severity: categorySeverity[item.categoria],
+  group: item.id === 'L1' ? 'posicionamento' : item.id === 'L2' ? 'gestual' : item.id === 'GG2' || item.id === 'GG3' ? 'seguranca' : 'regras',
+  safety: item.id === 'GG2' || item.id === 'GG3',
+}));
 export const points: Record<Severity, number> = { leve: 2, medio: 5, grave: 10, gravissimo: 20 };
 export const severityLabels: Record<Severity, string> = { leve: 'Leve', medio: 'Média', grave: 'Grave', gravissimo: 'Gravíssima' };
 export const fightTotal = 20;

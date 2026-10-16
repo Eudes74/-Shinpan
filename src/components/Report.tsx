@@ -1,6 +1,6 @@
 import { Activity, ArrowLeft, FileDown, MessageCircle, RotateCcw, ShieldAlert } from 'lucide-react';
 import { points, severityLabels, type Fight } from '../data/errors';
-import { getResult, shareSummary, statusLabels, type ReportForm } from '../data/report';
+import { approvalLabels, getResult, shareSummary, statusLabels, type ReportForm } from '../data/report';
 import EvaluationSheet from './EvaluationSheet';
 
 type Props = {
@@ -18,11 +18,11 @@ export default function Report({ form, fights, notes, onResume, onReset }: Props
     <header className="no-print border-b border-line bg-[#0d1627]"><div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-5 py-5 sm:px-8"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 text-white"><Activity size={22} strokeWidth={2.5} /></span><span className="text-lg font-black text-white">SHINPAN<span className="text-indigo-400">.</span></span></div><span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200">Avaliação encerrada</span></div></header>
     <main className="report-print mx-auto max-w-[1600px] px-4 pb-20 pt-8 sm:px-8">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><span className="eyebrow">DEVOLUTIVA DE ARBITRAGEM</span><h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white">Relatório de avaliação</h1><p className="mt-2 text-sm text-slate-400">Ficha dos 20 combates e apuração conforme a Matriz Regulamentar FIJ / CBJ fornecida.</p></div><span className="rounded-lg border border-line bg-panel px-4 py-2 text-xs font-bold text-slate-300">TATAME {form.tatami}</span></div>
-      <section className={`report-outcome report-outcome-${result.status}`} aria-label="Resultado da avaliação">
-        <p className={`report-status report-status-${result.status}`}>{statusLabels[result.status]}</p>
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">{result.veto ? 'Duas ou mais faltas gravíssimas registradas: condição de eliminação atingida.' : result.complete ? 'Os 20 combates têm função definida e visto do avaliador. Não foi atingida a condição de reprovação automática por faltas gravíssimas.' : 'É necessário definir a função e validar todos os 20 combates.'}</p>
-        {result.veto && <p className="mt-4 flex items-center gap-2 text-sm font-bold text-rose-300"><ShieldAlert size={18} />Reprovação Automática · {result.gravissimo} faltas gravíssimas</p>}
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">A ficha fornecida define os descontos e a eliminação por duas ou mais faltas gravíssimas, mas não uma nota mínima de aprovação. A conclusão da ficha não representa aprovação automática por categoria.</p>
+      <section className={`report-outcome report-outcome-${result.approval === 'failed' ? 'failed' : 'approved'}`} aria-label="Resultado da avaliação">
+        <p className={`report-status report-status-${result.approval === 'failed' ? 'failed' : 'approved'}`}>{approvalLabels[result.approval]}</p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-300">{statusLabels[result.status]} · {result.score} pontos de 100. {result.complete ? 'Os 20 combates têm função definida e visto do avaliador.' : 'Status provisório: defina a função e valide os 20 combates para concluir.'}</p>
+        {result.veto && <p className="mt-4 flex items-center gap-2 text-sm font-bold text-rose-300"><ShieldAlert size={18} />REPROVAÇÃO AUTOMÁTICA (2+ Faltas Gravíssimas) · {result.gravissimo} ocorrências</p>}
+        <p className="mt-3 text-xs leading-relaxed text-slate-400">Critérios desta avaliação: Aprovado FIJ com 85 pontos ou mais; Aprovado CBJ de 80 a 84 pontos; Reprovado abaixo de 80 pontos ou com duas ou mais faltas gravíssimas, independentemente da nota.</p>
       </section>
       <section className="my-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Identificação">
         <div className="summary-tile"><p className="report-label">Candidato</p><p className="mt-2 text-lg font-bold text-white">{form.candidate}</p><p className="mt-1 text-sm text-slate-400">{form.federation || 'Federação não informada'}</p></div>
