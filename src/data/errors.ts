@@ -1,41 +1,54 @@
 export const categories = ['Regional', 'Estadual', 'Nacional C', 'Nacional B', 'Nacional A', 'FIJ Continental', 'FIJ Internacional'] as const;
 export type Category = typeof categories[number];
-export type Severity = 'leve' | 'medio' | 'grave';
+export type Severity = 'leve' | 'medio' | 'grave' | 'gravissimo';
 export type GroupId = 'regras' | 'gestual' | 'posicionamento' | 'seguranca';
 export type ErrorItem = { id: string; label: string; severity: Severity; group: GroupId; safety?: boolean };
-export type Group = { id: GroupId; label: string; short: string; description: string };
-
-export const groups: Group[] = [
-  { id: 'regras', label: 'Regras e Pontuação', short: 'Regras', description: 'Decisões, marcações e aplicação das regras' },
-  { id: 'gestual', label: 'Gestual e Postura', short: 'Gestual', description: 'Comunicação, sinais e presença no tatame' },
-  { id: 'posicionamento', label: 'Posicionamento e Deslocamento', short: 'Posicionamento', description: 'Movimentação e visão de combate' },
-  { id: 'seguranca', label: 'Segurança e Combate', short: 'Segurança', description: 'Integridade dos atletas e continuidade da luta' },
+export const groups: { id: GroupId; label: string }[] = [
+  { id: 'regras', label: 'Regras e pontuação' },
+  { id: 'gestual', label: 'Gestual e comunicação' },
+  { id: 'posicionamento', label: 'Posicionamento' },
+  { id: 'seguranca', label: 'Segurança dos atletas' },
 ];
-
 export const errors: ErrorItem[] = [
-  { id: 'inversao', group: 'regras', severity: 'grave', label: 'Inversão de pontuação (atribuir golpe ao atleta que sofreu a queda)' },
-  { id: 'hansoku', group: 'regras', severity: 'grave', label: 'Não aplicação de Hansoku-make obrigatório (ações perigosas, head-dive, chaves ilegais)' },
-  { id: 'ippon', group: 'regras', severity: 'grave', label: 'Confundir Ippon com Waza-ari no encerramento da luta' },
-  { id: 'wazaari', group: 'regras', severity: 'medio', label: 'Marcar Waza-ari sem impacto ou critérios técnicos da FIJ' },
-  { id: 'osaekomi', group: 'regras', severity: 'medio', label: 'Hesitação excessiva para assinalar Osaekomi ou Toketa' },
-  { id: 'passividade', group: 'regras', severity: 'medio', label: 'Omissão em punir passividade evidente ou falsa investida no tempo correto' },
-  { id: 'sincronia', group: 'regras', severity: 'leve', label: 'Falha de sincronia entre comando de voz e gesto ao assinalar pontuação' },
-  { id: 'gestos', group: 'gestual', severity: 'medio', label: 'Utilização de gestos não padronizados pela FIJ ou sinais inventados' },
-  { id: 'voz', group: 'gestual', severity: 'medio', label: 'Comandos de voz inaudíveis para a mesa técnica e atletas' },
-  { id: 'braco', group: 'gestual', severity: 'leve', label: 'Braço flexionado ou sem firmeza ao sinalizar Ippon, Waza-ari ou Shido' },
-  { id: 'postura', group: 'gestual', severity: 'leve', label: 'Postura desleixada, braços cruzados ou mãos nos bolsos fora de ação' },
-  { id: 'judogi', group: 'gestual', severity: 'leve', label: 'Esquecer de autorizar ajuste de judogi (Sono-mama / Yoshi descoordenados)' },
-  { id: 'obstrucao', group: 'posicionamento', severity: 'grave', label: 'Obstruir fisicamente a trajetória de queda ou projeção dos atletas' },
-  { id: 'camera', group: 'posicionamento', severity: 'medio', label: 'Ficar de costas para o lance principal ou bloquear a visão da câmera do Care System' },
-  { id: 'newaza', group: 'posicionamento', severity: 'medio', label: 'Proximidade excessiva no Ne-waza impedindo visão da linha limítrofe' },
-  { id: 'passo', group: 'posicionamento', severity: 'leve', label: 'Cruzar as pernas no deslocamento (não usar passo Tsugi-ashi)' },
-  { id: 'borda', group: 'posicionamento', severity: 'leve', label: 'Permanecer estático colado na borda externa do tatame' },
-  { id: 'shime', group: 'seguranca', severity: 'grave', safety: true, label: 'Atrasar comando de Mate com judoca desacordado em Shime-waza' },
-  { id: 'maitta', group: 'seguranca', severity: 'grave', safety: true, label: 'Permitir continuidade de ação após desistência declarada (Maitta)' },
-  { id: 'mate', group: 'seguranca', severity: 'medio', label: 'Interrupção prematura (Mate indevido) em transição legítima de Tachi-waza para Ne-waza' },
-  { id: 'sangramento', group: 'seguranca', severity: 'medio', label: 'Demora em paralisar o combate mediante sangramento ativo' },
-  { id: 'reinicio', group: 'seguranca', severity: 'leve', label: 'Não reposicionar atletas no local correto de reinício após o Mate' },
+  { id: 'L1', severity: 'leve', group: 'posicionamento', label: 'Posicionamento inadequado / Linha de visão cega' },
+  { id: 'L2', severity: 'leve', group: 'gestual', label: 'Gestual ou comando de voz impreciso / Hesitação' },
+  { id: 'L3', severity: 'leve', group: 'regras', label: 'Demora ou hesitação na consulta ao Vídeo Replay' },
+  { id: 'M1', severity: 'medio', group: 'regras', label: 'Erro de Waza-ari (atribuição indevida ou omissão)' },
+  { id: 'M2', severity: 'medio', group: 'regras', label: 'Aplicação indevida ou omissão de Shido' },
+  { id: 'M3', severity: 'medio', group: 'regras', label: 'Interrupção indevida ou Mate tardio' },
+  { id: 'M4', severity: 'medio', group: 'regras', label: 'Solicitação desnecessária de Vídeo Replay em lance claro' },
+  { id: 'G1', severity: 'grave', group: 'regras', label: 'Inversão de pontuação (atribuir ponto ao atleta errado)' },
+  { id: 'G2', severity: 'grave', group: 'regras', label: 'Divergência de tempo/placar ou reinício sem alinhamento' },
+  { id: 'G3', severity: 'grave', group: 'regras', label: 'Omissão de checagem no Vídeo Replay em lance crítico' },
+  { id: 'G4', severity: 'grave', group: 'regras', label: 'Desalinhamento injustificado entre Central e Mesa de Vídeo' },
+  { id: 'GG1', severity: 'gravissimo', group: 'regras', label: 'Erro crítico: Ippon inexistente (de Ippon para nada) ou omitido' },
+  { id: 'GG2', severity: 'gravissimo', group: 'seguranca', safety: true, label: 'Falha grave de segurança dos atletas (sem Mate imediato)' },
+  { id: 'GG3', severity: 'gravissimo', group: 'seguranca', safety: true, label: 'Omissão de Hansoku-make direto (ações perigosas/conduta grave)' },
+  { id: 'GG4', severity: 'gravissimo', group: 'regras', label: 'Ignorar correção mandatória do Vídeo Replay / Comissão' },
 ];
-
-export const points: Record<Severity, number> = { leve: 2, medio: 5, grave: 15 };
-export const severityLabels: Record<Severity, string> = { leve: 'Leve', medio: 'Médio', grave: 'Grave' };
+export const points: Record<Severity, number> = { leve: 2, medio: 5, grave: 10, gravissimo: 20 };
+export const severityLabels: Record<Severity, string> = { leve: 'Leve', medio: 'Média', grave: 'Grave', gravissimo: 'Gravíssima' };
+export const fightTotal = 20;
+export type Role = '' | 'C' | 'L' | 'V';
+export const roleLabels: Record<Role, string> = { '': 'Selecionar', C: 'Central', L: 'Lateral', V: 'Vídeo' };
+export type Fight = { number: number; role: Role; counts: Record<string, number>; verified: boolean };
+export const createFights = (): Fight[] => Array.from({ length: fightTotal }, (_, i) => ({ number: i + 1, role: '', counts: {}, verified: false }));
+export const maxPerFight = (id: string) => id === 'M2' ? 5 : ['M1', 'M3', 'M4'].includes(id) ? 3 : 1;
+export const fightDeduction = (fight: Fight) => errors.reduce((sum, item) => sum + (fight.counts[item.id] ?? 0) * points[item.severity], 0);
+export function aggregateCounts(fights: Fight[]): Record<string, number> {
+  return Object.fromEntries(errors.map(item => [item.id, fights.reduce((sum, fight) => sum + (fight.counts[item.id] ?? 0), 0)]));
+}
+export const isComplete = (fights: Fight[]) => fights.length === fightTotal && fights.every(fight => fight.role !== '' && fight.verified);
+export function restoreFights(value: unknown): Fight[] {
+  const saved = Array.isArray(value) ? value : [];
+  return createFights().map((fight, i) => {
+    const row = saved[i];
+    if (!row || typeof row !== 'object') return fight;
+    const role: Role = ['C', 'L', 'V'].includes(row.role) ? row.role : '';
+    const counts = Object.fromEntries(errors.map(item => {
+      const count = row.counts?.[item.id];
+      return [item.id, Number.isSafeInteger(count) && count >= 0 ? Math.min(count, maxPerFight(item.id)) : 0];
+    }));
+    return { ...fight, role, counts, verified: role !== '' && row.verified === true };
+  });
+}

@@ -1,4 +1,4 @@
-import { errors, groups, points, type Category, type ErrorItem } from './errors';
+import { errors, points, fightTotal, aggregateCounts, isComplete, type Category, type Fight } from './errors';
 
 export type ReportForm = {
   candidate: string;
@@ -9,73 +9,48 @@ export type ReportForm = {
   event: string;
   tatami: string;
 };
-export type Status = 'approved' | 'retest' | 'failed';
+export type Status = 'completed' | 'incomplete' | 'failed';
 export const statusLabels: Record<Status, string> = {
-  approved: 'APROVADO',
-  retest: 'EM OBSERVAÇÃO / RETESTE',
-  failed: 'REPROVADO',
+  completed: 'AVALIAÇÃO CONCLUÍDA',
+  incomplete: 'AVALIAÇÃO INCOMPLETA',
+  failed: 'REPROVAÇÃO AUTOMÁTICA',
 };
-export type Result = {
-  score: number;
-  total: number;
-  medium: number;
-  grave: number;
-  safety: number;
-  veto: boolean;
-  minimum: number;
-  maxMedium: number;
-  noGrave: boolean;
-  status: Status;
-  reasons: string[];
-  recorded: { item: ErrorItem; quantity: number }[];
-  strongGroups: typeof groups;
-};
-
-export function getResult(form: ReportForm, counts: Record<string, number>): Result {
-  const quantity = (item: ErrorItem) => counts[item.id] ?? 0;
-  const recorded = errors.filter(item => quantity(item) > 0).map(item => ({ item, quantity: quantity(item) }));
-  const total = recorded.reduce((sum, row) => sum + row.quantity, 0);
-  const score = Math.max(0, 100 - recorded.reduce((sum, row) => sum + row.quantity * points[row.item.severity], 0));
-  const medium = recorded.filter(row => row.item.severity === 'medio').reduce((sum, row) => sum + row.quantity, 0);
-  const grave = recorded.filter(row => row.item.severity === 'grave').reduce((sum, row) => sum + row.quantity, 0);
-  const safety = recorded.filter(row => row.item.safety).reduce((sum, row) => sum + row.quantity, 0);
-  const graveRules = recorded.filter(row => row.item.group === 'regras' && row.item.severity === 'grave').reduce((sum, row) => sum + row.quantity, 0);
-  const minimum = form.target === 'Regional' ? 70 : form.target === 'Estadual' ? 80 : 90;
-  const maxMedium = form.target === 'Regional' ? 4 : form.target === 'Estadual' ? 3 : 1;
-  const noGrave = form.target !== 'Regional' && form.target !== 'Estadual';
-  const veto = safety > 0 || graveRules >= 2;
-  const reasons: string[] = [];
-  if (safety > 0) reasons.push(`${safety} ocorrência(s) grave(s) de segurança — veto automático.`);
-  if (graveRules >= 2) reasons.push(`${graveRules} ocorrências graves de regra — veto automático.`);
-  if (noGrave && grave > 0 && !veto) reasons.push('Categorias Nacional/FIJ não permitem erros graves.');
-  if (score < minimum) reasons.push(`Pontuação abaixo do mínimo de ${minimum} pontos (${score}/100).`);
-  if (medium > maxMedium) reasons.push(`${medium} ocorrências médias; limite da categoria: ${maxMedium}.`);
-  const status: Status = veto || (noGrave && grave > 0) || score < minimum - 5 || medium > maxMedium + 1
-    ? 'failed'
-    : score < minimum || medium > maxMedium ? 'retest' : 'approved';
-  if (!reasons.length) reasons.push(`Pontuação e ocorrências dentro da régua da categoria ${form.target}, sem veto.`);
-  return {
-    score, total, medium, grave, safety, veto, minimum, maxMedium, noGrave, status, reasons, recorded,
-    strongGroups: groups.filter(group => !recorded.some(row => row.item.group === group.id)),
-  };
+export function getResult(fights: Fight[]) {
+  const counts = aggregateCounts(fights);
+  const recorded = errors.filter(item => counts[item.id] > 0).map(item => ({ item, quantity: counts[item.id] }));
+  const severityCount = (severity: string) => recorded.filter(row => row.item.severity === severity).reduce((sum, row) => sum + row.quantity, 0);
+  const light = severityCount('leve');
+  const medium = severityCount('medio');
+  const grave = severityCount('grave');
+  const gravissimo = severityCount('gravissimo');
+  const deduction = recorded.reduce((sum, row) => sum + row.quantity * points[row.item.severity], 0);
+  const veto = gravissimo >= 2;
+  const complete = isComplete(fights);
+  const validated = fights.filter(fight => fight.role && fight.verified).length;
+  const status: Status = veto ? 'failed' : complete ? 'completed' : 'incomplete';
+  return { score: 100 - deduction, deduction, total: light + medium + grave + gravissimo, light, medium, grave, gravissimo, veto, complete, validated, status, recorded };
 }
+export type Result = ReturnType<typeof getResult>;
 
-export function shareSummary(form: ReportForm, result: Result, notes: string): string {
+export function shareSummary(form: ReportForm, result: Result, notes: string, fights: Fight[]): string {
   const lines = [
-    '*SHINPAN | Avaliação de Arbitragem de Judô*',
+    '*SHINPAN | Ficha de Avaliação Prática FIJ / CBJ*',
     `Candidato: ${form.candidate}`,
     `Federação / Associação: ${form.federation || 'Não informada'}`,
     `Categoria: ${form.current} → ${form.target}`,
     `Avaliador: ${form.evaluator || 'Não informado'}`,
     `Evento: ${form.event || 'Não informado'} | Tatame ${form.tatami}`,
-    `*Resultado: ${statusLabels[result.status]}*`,
-    `Pontuação: ${result.score}/100 (mín. ${result.minimum})`,
-    `Ocorrências: ${result.total} | Médias: ${result.medium}/${result.maxMedium} | Graves: ${result.grave}`,
-    `Veto: ${result.veto ? 'Sim' : 'Não'}`,
-    `Critérios: ${result.reasons.join(' ')}`,
-    `Pontos fortes: ${result.strongGroups.length ? result.strongGroups.map(group => group.label).join(', ') : 'Nenhuma área sem ocorrências'}`,
-    'Oportunidades de melhoria:',
-    ...(result.recorded.length ? result.recorded.map(({ item, quantity }) => `• ${item.label} (${quantity}×; −${quantity * points[item.severity]} pts)`) : ['Nenhuma ocorrência registrada.']),
+    `*${statusLabels[result.status]}*`,
+    `Pontuação: ${result.score} (100 − ${result.deduction})`,
+    `Combates validados: ${result.validated}/${fightTotal}`,
+    `Leves: ${result.light} | Médias: ${result.medium} | Graves: ${result.grave} | Gravíssimas: ${result.gravissimo}`,
+    `Reprovação automática (GG ≥ 2): ${result.veto ? 'Sim' : 'Não'}`,
+    'Registro por combate (C: Central; L: Lateral; V: Vídeo):',
+    ...fights.map(fight => {
+      const entries = errors.filter(item => fight.counts[item.id]).map(item => `${item.id} ×${fight.counts[item.id]}`).join(', ');
+      return `Luta ${String(fight.number).padStart(2, '0')} | ${fight.role || 'Sem função'} | ${entries || 'Sem faltas registradas'} | Visto: ${fight.verified ? 'Sim' : 'Pendente'}`;
+    }),
+    'Duas ou mais faltas gravíssimas implicam reprovação automática. A pontuação, isoladamente, não define aprovação nesta ficha.',
   ];
   if (notes.trim()) lines.push(`Observações: ${notes.trim()}`);
   return lines.join('\n');
