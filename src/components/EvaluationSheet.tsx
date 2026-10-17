@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Plus, ShieldAlert, X } from 'lucide-react';
 import { errors, fightDeduction, fightTotal, points, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
-import { approvalLabels, getResult } from '../data/report';
+import { approvalLabels, getResult, type ReportForm } from '../data/report';
 
 type Props = {
   fights: Fight[];
   onChange: (index: number, fight: Fight) => void;
+  identification: Pick<ReportForm, 'candidate' | 'evaluator' | 'tatami'>;
   readOnly?: boolean;
 };
 const severities: Severity[] = ['leve', 'medio', 'grave', 'gravissimo'];
@@ -35,9 +36,15 @@ function ErrorPicker({ fight, onSelect, onClose }: { fight: Fight; onSelect: (it
   </dialog>;
 }
 
-export default function EvaluationSheet({ fights, onChange, readOnly = false }: Props) {
+export default function EvaluationSheet({ fights, onChange, identification, readOnly = false }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const result = getResult(fights);
+  const hasEvaluationData = fights.some(fight => fight.role || fight.verified) || result.total > 0;
+  const sheetStatuses = [
+    { label: 'Aprovado FIJ', checked: result.complete && result.approval === 'fij' },
+    { label: 'Em Avaliação', checked: !result.complete && !result.veto },
+    { label: 'Reprovado', checked: result.veto || (result.complete && result.approval === 'failed') },
+  ];
   const totals = [result.light, result.medium, result.grave, result.gravissimo];
   const activeFight = activeIndex === null ? undefined : fights[activeIndex];
   const setCount = (index: number, id: string, value: number) => {
@@ -46,20 +53,35 @@ export default function EvaluationSheet({ fights, onChange, readOnly = false }: 
   };
   return <section className="referee-form rounded-2xl bg-slate-100 text-slate-800 [color-scheme:light]" aria-label="Formulário de avaliação prática de arbitragem">
     <header className={`referee-summary z-20 rounded-t-2xl border border-slate-300 bg-white shadow-md ${readOnly ? '' : 'sticky top-0'}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <div><p className="text-xs font-bold text-slate-500">Pontuação atual</p><p className="text-3xl font-black tabular-nums sm:text-4xl" aria-live="polite" aria-atomic="true">{result.score}<span className="text-sm font-medium text-slate-500"> / 100</span></p><p className="text-xs text-slate-500">100 − {result.deduction} em deduções</p></div>
-          <div><p className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-extrabold ${result.approval === 'failed' ? 'border-red-300 bg-red-50 text-red-800' : 'border-emerald-300 bg-emerald-50 text-emerald-800'}`} role="status">{approvalLabels[result.approval]}</p><p className="mt-1 text-xs text-slate-500">{result.complete ? 'Resultado final' : 'Status provisório'}</p></div>
+      <div className="sheet-heading px-4 py-3 sm:px-6">
+        <h2 className="sheet-title text-lg font-black sm:text-xl">Ficha de Avaliação de Arbitragem</h2>
+        <div className="sheet-identification">
+          <p className="sheet-field sheet-candidate"><strong>Árbitro Avaliado:</strong><span className="sheet-write-line">{identification.candidate || '\u00a0'}</span></p>
+          <div className="sheet-evaluator-row">
+            <p className="sheet-field"><strong>Avaliador:</strong><span className="sheet-write-line">{identification.evaluator || '\u00a0'}</span></p>
+            <p className="sheet-field sheet-area"><strong>Tatame/Área:</strong><span className="sheet-write-line">{identification.tatami || '\u00a0'}</span></p>
+          </div>
+          <p className="sheet-field"><strong>Data:</strong><span className="sheet-date">____/____/______</span></p>
+          <div className="sheet-statuses" aria-label="Status da avaliação"><strong>Status:</strong>{sheetStatuses.map(status => <span key={status.label} className="sheet-status-option"><span className="sheet-status-box" aria-hidden="true">{hasEvaluationData && status.checked ? '✓' : ''}</span>{status.label}{hasEvaluationData && status.checked && <span className="sr-only"> (marcado)</span>}</span>)}</div>
         </div>
-        <div className="text-right"><p className="text-sm font-extrabold tabular-nums">{result.validated} / {fightTotal}</p><p className="text-xs text-slate-500">combates concluídos</p></div>
+        <div className="sheet-score-grid" aria-label="Resumo de pontuação" aria-live="polite" aria-atomic="true">
+          <div className="sheet-score"><span>Nota Inicial:</span><strong>[ 100 ]</strong></div>
+          <div className="sheet-score"><span>Total de Deduções:</span><strong><span className={hasEvaluationData ? '' : 'sheet-auto-value'}>[ −{result.deduction} pts ]</span>{!hasEvaluationData && <span className="sheet-manual-value">[ −____ pts ]</span>}</strong></div>
+          <div className="sheet-score sheet-final-score"><span>Nota Final:</span><strong><span className={hasEvaluationData ? '' : 'sheet-auto-value'}>[ {result.score} / 100 ]</span>{!hasEvaluationData && <span className="sheet-manual-value">[ _____ / 100 ]</span>}</strong></div>
+        </div>
+        <div className="no-print mt-3 flex flex-wrap items-center justify-between gap-2">
+          <div><p className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-extrabold ${result.approval === 'failed' ? 'border-red-300 bg-red-50 text-red-800' : 'border-emerald-300 bg-emerald-50 text-emerald-800'}`} role="status">{approvalLabels[result.approval]}</p><span className="ml-2 text-xs text-slate-500">{result.complete ? 'Resultado final' : 'Status provisório'}</span></div>
+          <p className="text-xs text-slate-500"><strong className="text-slate-800">{result.validated} / {fightTotal}</strong> combates concluídos</p>
+        </div>
       </div>
-      <div className="grid grid-cols-4 gap-1.5 px-3 pb-3 sm:gap-3 sm:px-6" aria-label="Infrações por categoria">{severities.map((severity, index) => <div key={severity} className={`referee-counter tone-${severity} flex flex-col items-center justify-center gap-1 rounded-xl border p-2 sm:flex-row sm:justify-between sm:px-3`}><span className="text-center text-[10px] font-bold sm:text-xs">{severityLabels[severity]}s <span className="hidden sm:inline">(−{points[severity]})</span></span><strong className="text-xl font-black leading-none tabular-nums">{totals[index]}</strong></div>)}</div>
+      <div className="no-print grid grid-cols-4 gap-1.5 px-3 pb-3 sm:gap-3 sm:px-6" aria-label="Infrações por categoria">{severities.map((severity, index) => <div key={severity} className={`referee-counter tone-${severity} flex flex-col items-center justify-center gap-1 rounded-xl border p-2 sm:flex-row sm:justify-between sm:px-3`}><span className="text-center text-[10px] font-bold sm:text-xs">{severityLabels[severity]}s <span className="hidden sm:inline">(−{points[severity]})</span></span><strong className="text-xl font-black leading-none tabular-nums">{totals[index]}</strong></div>)}</div>
       {result.veto && <div className="referee-critical flex items-center gap-3 border-t border-red-900 bg-red-700 px-4 py-3 text-white sm:px-6" role="alert"><ShieldAlert size={24} className="shrink-0" aria-hidden="true" /><div><strong className="block text-xs font-black sm:text-sm">REPROVAÇÃO AUTOMÁTICA (2+ Faltas Gravíssimas)</strong><p className="mt-1 text-xs">{result.gravissimo} ocorrências acumuladas na avaliação.</p></div></div>}
     </header>
-    <div className="p-3 sm:p-6">
-      <div className="mb-5"><h2 className="text-lg font-extrabold sm:text-xl">Combates · Avaliação prática</h2><p className="mt-1 text-sm text-slate-600">FIJ / CBJ · 20 lutas · FIJ: 85+ pontos · CBJ: 80 a 84 pontos</p>{!readOnly && <p className="mt-2 text-sm leading-relaxed text-slate-600">Selecione a função, registe as infrações pelo nome e marque o visto. Alterar a função ou as infrações retira o visto.</p>}</div>
-      <div className="fight-grid grid items-start gap-4 xl:grid-cols-2">
-        {fights.map((fight, index) => {
+    <div className="fight-pages p-3 sm:p-6">
+      <div className="no-print mb-5"><h2 className="text-lg font-extrabold sm:text-xl">Combates · Avaliação prática</h2><p className="mt-1 text-sm text-slate-600">FIJ / CBJ · 20 lutas · FIJ: 85+ pontos · CBJ: 80 a 84 pontos</p>{!readOnly && <p className="mt-2 text-sm leading-relaxed text-slate-600">Selecione a função, registe as infrações pelo nome e marque o visto. Alterar a função ou as infrações retira o visto.</p>}</div>
+      {[0, 10].map(start => <div key={start} className="fight-grid grid items-start gap-4 xl:grid-cols-2">
+        {fights.slice(start, start + 10).map((fight, offset) => {
+          const index = start + offset;
           const deduction = fightDeduction(fight);
           const recorded = errors.filter(item => (fight.counts[item.id] ?? 0) > 0);
           return <article key={fight.number} className={`fight-card min-w-0 rounded-2xl border bg-white p-4 shadow-sm sm:p-5 ${fight.verified ? 'border-emerald-400' : 'border-slate-300'}`} aria-labelledby={`fight-${fight.number}`}>
@@ -84,7 +106,7 @@ export default function EvaluationSheet({ fights, onChange, readOnly = false }: 
             </div>
           </article>;
         })}
-      </div>
+      </div>)}
     </div>
     {!readOnly && activeFight && activeIndex !== null && <ErrorPicker fight={activeFight} onClose={() => setActiveIndex(null)} onSelect={item => {
       setCount(activeIndex, item.id, (activeFight.counts[item.id] ?? 0) + 1);
