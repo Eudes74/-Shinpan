@@ -56,6 +56,15 @@ button:disabled { cursor: not-allowed; }
 .referee-counter, .referee-tag { border-color: var(--tone-border); background: var(--tone-bg); color: var(--tone-text); }
 .referee-form :focus-visible, .error-picker :focus-visible { outline: 3px solid #2472c1; outline-offset: 2px; }
 .referee-form button, .referee-form label { touch-action: manipulation; }
+.referee-form .fight-manual { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #94a3b8; font-size: 13px; line-height: 1.5; color: #172033; }
+.referee-form .fight-manual-hint { margin: 0 0 10px; font-size: 11px; font-weight: 700; color: #64748b; }
+.referee-form .fight-manual-role { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.referee-form .fight-manual-option { display: inline-flex; align-items: center; gap: 7px; }
+.referee-form .fight-manual-box { display: inline-block; flex: 0 0 13px; width: 13px; height: 13px; border: 1px solid #334155; background: white; }
+.referee-form .fight-manual-errors { display: grid; gap: 8px; margin: 14px 0; }
+.referee-form .fight-manual-note { display: flex; align-items: baseline; gap: 8px; }
+.referee-form .fight-manual-note > span { display: inline-block; width: 160px; max-width: 75%; height: 18px; border-bottom: 1px dotted #334155; }
+.referee-form .fight-manual-deduction { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #cbd5e1; }
 @keyframes critical-warning { 0%, 100% { background-color: #b91c1c; } 50% { background-color: #7f1d1d; } }
 .referee-critical { animation: critical-warning 1.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .referee-critical { animation: none; } }
@@ -107,7 +116,17 @@ button:disabled { cursor: not-allowed; }
   .report-print .eyebrow::before { background: #475569 !important; }
   .report-print .referee-form { border-radius: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .report-print .referee-summary { position: static; box-shadow: none; }
-  .report-print .fight-card { break-inside: avoid; border: 1px solid #cbd5e1; box-shadow: none; }
+  .referee-form .fight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 3mm !important; align-items: stretch; }
+  .referee-form .fight-card { break-inside: avoid; page-break-inside: avoid; padding: 3mm; border: 1px solid #172033 !important; border-radius: 2mm; background: white; color: #172033; box-shadow: none; }
+  .referee-form .fight-card > div:first-child { margin-bottom: 2mm; }
+  .referee-form .fight-card h3 { font-size: 12pt; }
+  .referee-form .fight-digital, .referee-form .fight-state { display: none !important; }
+  .referee-form .fight-manual { margin: 0; padding: 0; border: 0; font-size: 10pt; line-height: 1.4; }
+  .referee-form .fight-manual-role { gap: 2mm 3mm; }
+  .referee-form .fight-manual-box { flex-basis: 3mm; width: 3mm; height: 3mm; border-color: #172033; }
+  .referee-form .fight-manual-errors { gap: 1.5mm; margin: 3mm 0; }
+  .referee-form .fight-manual-note > span { width: 40mm; height: 5mm; border-bottom-color: #172033; }
+  .referee-form .fight-manual-deduction { margin-top: 3mm; padding-top: 2mm; border-top-color: #172033; }
   .report-print .referee-critical { animation: none; background: white; color: #991b1b; }
   .error-picker { display: none; }
 }
