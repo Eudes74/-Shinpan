@@ -10,9 +10,10 @@ type Props = {
   notes: string;
   onResume: () => void;
   onReset: () => void;
+  onCandidateEmailChange: (email: string) => void;
 };
 
-export default function Report({ form, fights, notes, onResume, onReset }: Props) {
+export default function Report({ form, fights, notes, onResume, onReset, onCandidateEmailChange }: Props) {
   const result = getResult(fights);
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareSummary(form, result, notes, fights))}`;
   return <>
@@ -31,7 +32,7 @@ export default function Report({ form, fights, notes, onResume, onReset }: Props
         <div className="summary-tile"><p className="report-label">Avaliador</p><p className="mt-2 text-sm font-semibold text-white">{form.evaluator || 'Não informado'}</p></div>
         <div className="summary-tile"><p className="report-label">Evento / Área</p><p className="mt-2 text-sm font-semibold text-white">{form.event || 'Evento não informado'} · Tatame {form.tatami}</p></div>
       </section>
-      <EvaluationPdfExport form={form} fights={fights} notes={notes} />
+      <EvaluationPdfExport form={form} fights={fights} notes={notes} onCandidateEmailChange={onCandidateEmailChange} />
       <div className="mt-6"><EvaluationSheet fights={fights} onChange={() => {}} identification={form} readOnly /></div>
       <section className="mt-6 rounded-2xl border border-line bg-panel p-5 sm:p-7"><h2 className="text-lg font-bold text-white">Detalhamento das ocorrências</h2><p className="mt-2 text-sm text-slate-400">{result.total} ocorrências · {result.deduction} pontos de dedução.</p>
         {result.recorded.length ? <ul className="mt-5 divide-y divide-line">{result.recorded.map(({ item, quantity }) => <li key={item.id} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0 last:pb-0"><div className="min-w-0 flex-1"><span className={`severity-tag severity-tag-${item.severity}`}>{severityLabels[item.severity]}</span><p className="mt-2 text-sm leading-relaxed text-slate-200">{item.label}</p><p className="mt-1 text-xs text-slate-400">Lutas: {fights.filter(fight => fight.counts[item.id]).map(fight => `${String(fight.number).padStart(2, '0')} (×${fight.counts[item.id]})`).join(', ')}</p></div><div className="shrink-0 text-right text-sm"><strong className="text-white">×{quantity}</strong><p className="text-slate-400">−{quantity * points[item.severity]} pts</p></div></li>)}</ul> : <p className="mt-5 text-sm text-slate-400">Nenhuma ocorrência registrada nos 20 combates.</p>}

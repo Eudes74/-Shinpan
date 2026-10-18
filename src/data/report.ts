@@ -2,6 +2,7 @@ import { errors, points, fightTotal, roleLabels, aggregateCounts, isComplete, ty
 
 export type ReportForm = {
   candidate: string;
+  candidateEmail?: string;
   federation: string;
   current: Category;
   target: Category;
