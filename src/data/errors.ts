@@ -1,4 +1,4 @@
-export const categories = ['Regional', 'Estadual', 'Nacional C', 'Nacional B', 'Nacional A', 'FIJ Continental', 'FIJ Internacional'] as const;
+export const categories = ['Regional', 'Estadual', 'Nacional C', 'Nacional B', 'Nacional A', 'FIJ C', 'FIJ Continental', 'FIJ Internacional'] as const;
 export type Category = typeof categories[number];
 export type Severity = 'leve' | 'medio' | 'grave' | 'gravissimo';
 export type GroupId = 'regras' | 'gestual' | 'posicionamento' | 'seguranca';
