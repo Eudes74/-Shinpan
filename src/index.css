@@ -93,6 +93,9 @@ button:disabled { cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .referee-critical { animation: none; } }
 .error-picker { color-scheme: light; width: min(1280px, calc(100% - 24px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid #bac8d5; border-radius: 16px; background: #f6f9fc; color: #20364f; box-shadow: 0 24px 80px #0006; overflow: auto; overscroll-behavior: contain; }
 .error-picker::backdrop { background: #050e20bd; backdrop-filter: blur(3px); }
+.event-manager { width: min(768px, calc(100% - 24px)); max-height: calc(100dvh - 24px); overscroll-behavior: contain; }
+.event-manager::backdrop { background: #050e20bd; backdrop-filter: blur(3px); }
+@media screen { .referee-form .sheet-field.hidden { display: none; } }
 .picker-content { padding: 20px; }
 .picker-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .picker-header span { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #476582; }

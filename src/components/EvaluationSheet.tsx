@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { formatEventDate } from '../data/events';
 import { CheckCircle2, Plus, ShieldAlert, X } from 'lucide-react';
 import { errors, fightDeduction, fightTotal, points, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
 import { approvalLabels, getResult, type ReportForm } from '../data/report';
@@ -6,7 +7,8 @@ import { approvalLabels, getResult, type ReportForm } from '../data/report';
 type Props = {
   fights: Fight[];
   onChange: (index: number, fight: Fight) => void;
-  identification: Pick<ReportForm, 'candidate' | 'evaluator' | 'tatami'>;
+  identification: ReportForm;
+  eventFields?: ReactNode;
   readOnly?: boolean;
 };
 const severities: Severity[] = ['leve', 'medio', 'grave', 'gravissimo'];
@@ -36,7 +38,7 @@ function ErrorPicker({ fight, onSelect, onClose }: { fight: Fight; onSelect: (it
   </dialog>;
 }
 
-export default function EvaluationSheet({ fights, onChange, identification, readOnly = false }: Props) {
+export default function EvaluationSheet({ fights, onChange, identification, eventFields, readOnly = false }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const result = getResult(fights);
   const hasEvaluationData = fights.some(fight => fight.role || fight.verified) || result.total > 0;
@@ -55,13 +57,16 @@ export default function EvaluationSheet({ fights, onChange, identification, read
     <header className={`referee-summary z-20 rounded-t-2xl border border-slate-300 bg-white shadow-md ${readOnly ? '' : 'sticky top-0'}`}>
       <div className="sheet-heading px-4 py-3 sm:px-6">
         <h2 className="sheet-title text-lg font-black sm:text-xl">Ficha de Avaliação de Arbitragem</h2>
+        {eventFields && !readOnly && <div className="no-print mb-4 border-b border-slate-200 pb-4">{eventFields}</div>}
         <div className="sheet-identification">
+          <p className={`sheet-field ${eventFields && !readOnly ? 'hidden print:flex' : ''}`}><strong>Evento / Competição:</strong><span className="sheet-write-line">{identification.event || '\u00a0'}</span></p>
+          {identification.eventLocation && <p className={`sheet-field ${eventFields && !readOnly ? 'hidden print:flex' : ''}`}><strong>Local:</strong><span className="sheet-write-line">{identification.eventLocation}</span></p>}
           <p className="sheet-field sheet-candidate"><strong>Árbitro Avaliado:</strong><span className="sheet-write-line">{identification.candidate || '\u00a0'}</span></p>
           <div className="sheet-evaluator-row">
             <p className="sheet-field"><strong>Avaliador:</strong><span className="sheet-write-line">{identification.evaluator || '\u00a0'}</span></p>
             <p className="sheet-field sheet-area"><strong>Tatame/Área:</strong><span className="sheet-write-line">{identification.tatami || '\u00a0'}</span></p>
           </div>
-          <p className="sheet-field"><strong>Data:</strong><span className="sheet-date">____/____/______</span></p>
+          <p className="sheet-field"><strong>Data:</strong><span className="sheet-date">{formatEventDate(identification.date) || '____/____/______'}</span></p>
           <div className="sheet-statuses" aria-label="Status da avaliação"><strong>Status:</strong>{sheetStatuses.map(status => <span key={status.label} className="sheet-status-option"><span className="sheet-status-box" aria-hidden="true">{hasEvaluationData && status.checked ? '✓' : ''}</span>{status.label}{hasEvaluationData && status.checked && <span className="sr-only"> (marcado)</span>}</span>)}</div>
         </div>
         <div className="sheet-score-grid" aria-label="Resumo de pontuação" aria-live="polite" aria-atomic="true">

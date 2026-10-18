@@ -7,6 +7,13 @@ export type ReportForm = {
   target: Category;
   evaluator: string;
   event: string;
+  eventId?: string;
+  eventLocation?: string;
+  eventStartDate?: string;
+  eventEndDate?: string;
+  eventOrganizer?: string;
+  eventAreas?: number;
+  date?: string;
   tatami: string;
 };
 export type Status = 'completed' | 'incomplete' | 'failed';
