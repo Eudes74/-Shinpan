@@ -1,7 +1,8 @@
-import { Activity, ArrowLeft, FileDown, MessageCircle, RotateCcw, ShieldAlert } from 'lucide-react';
+import { Activity, ArrowLeft, MessageCircle, RotateCcw, ShieldAlert } from 'lucide-react';
 import { points, severityLabels, type Fight } from '../data/errors';
 import { approvalLabels, getResult, shareSummary, statusLabels, type ReportForm } from '../data/report';
 import EvaluationSheet from './EvaluationSheet';
+import EvaluationPdfExport from './EvaluationPdfExport';
 
 type Props = {
   form: ReportForm;
@@ -30,12 +31,13 @@ export default function Report({ form, fights, notes, onResume, onReset }: Props
         <div className="summary-tile"><p className="report-label">Avaliador</p><p className="mt-2 text-sm font-semibold text-white">{form.evaluator || 'Não informado'}</p></div>
         <div className="summary-tile"><p className="report-label">Evento / Área</p><p className="mt-2 text-sm font-semibold text-white">{form.event || 'Evento não informado'} · Tatame {form.tatami}</p></div>
       </section>
-      <EvaluationSheet fights={fights} onChange={() => {}} identification={form} readOnly />
+      <EvaluationPdfExport form={form} fights={fights} notes={notes} />
+      <div className="mt-6"><EvaluationSheet fights={fights} onChange={() => {}} identification={form} readOnly /></div>
       <section className="mt-6 rounded-2xl border border-line bg-panel p-5 sm:p-7"><h2 className="text-lg font-bold text-white">Detalhamento das ocorrências</h2><p className="mt-2 text-sm text-slate-400">{result.total} ocorrências · {result.deduction} pontos de dedução.</p>
         {result.recorded.length ? <ul className="mt-5 divide-y divide-line">{result.recorded.map(({ item, quantity }) => <li key={item.id} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0 last:pb-0"><div className="min-w-0 flex-1"><span className={`severity-tag severity-tag-${item.severity}`}>{severityLabels[item.severity]}</span><p className="mt-2 text-sm leading-relaxed text-slate-200">{item.label}</p><p className="mt-1 text-xs text-slate-400">Lutas: {fights.filter(fight => fight.counts[item.id]).map(fight => `${String(fight.number).padStart(2, '0')} (×${fight.counts[item.id]})`).join(', ')}</p></div><div className="shrink-0 text-right text-sm"><strong className="text-white">×{quantity}</strong><p className="text-slate-400">−{quantity * points[item.severity]} pts</p></div></li>)}</ul> : <p className="mt-5 text-sm text-slate-400">Nenhuma ocorrência registrada nos 20 combates.</p>}
       </section>
       {notes.trim() && <section className="mt-6 rounded-2xl border border-line bg-panel p-5 sm:p-7"><h2 className="text-lg font-bold text-white">Observações</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">{notes}</p></section>}
-      <div className="no-print mt-8 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => window.print()} className="primary-button"><FileDown size={18} />Exportar relatório / Imprimir (PDF)</button><a href={whatsapp} target="_blank" rel="noopener noreferrer" className="secondary-button text-center"><MessageCircle size={18} />Compartilhar resumo via WhatsApp</a><button type="button" onClick={onResume} className="secondary-button"><ArrowLeft size={18} />Retomar avaliação</button><button type="button" onClick={onReset} className="secondary-button"><RotateCcw size={18} />Nova avaliação</button></div><p className="no-print mt-4 text-center text-xs text-slate-500">Para salvar em PDF, escolha “Salvar como PDF” na janela de impressão. O WhatsApp requer conexão à internet.</p>
+      <div className="no-print mt-8 grid gap-3 sm:grid-cols-2"><a href={whatsapp} target="_blank" rel="noopener noreferrer" className="secondary-button text-center"><MessageCircle size={18} />Compartilhar resumo via WhatsApp</a><button type="button" onClick={onResume} className="secondary-button"><ArrowLeft size={18} />Retomar avaliação</button><button type="button" onClick={onReset} className="secondary-button"><RotateCcw size={18} />Nova avaliação</button></div><p className="no-print mt-4 text-center text-xs text-slate-500">O WhatsApp compartilha apenas o resumo e requer conexão à internet.</p>
     </main>
   </>;
 }

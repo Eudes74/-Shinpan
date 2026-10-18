@@ -16,7 +16,7 @@ function restore(): Evaluator {
 function Field({ label, children, required = false }: { label: string; children: ReactNode; required?: boolean }) {
   return <label className="block space-y-2"><span className="block text-sm font-medium text-slate-100">{label}{required && ' *'}</span>{children}</label>;
 }
-export default function EvaluatorRegistration({ onSave, onCancel }: { onSave: (name: string) => void; onCancel: () => void }) {
+export default function EvaluatorRegistration({ onSave, onCancel }: { onSave: (name: string, role: string) => void; onCancel: () => void }) {
   const [form, setForm] = useState<Evaluator>(restore);
   const [error, setError] = useState('');
   const update = (key: keyof Evaluator, value: string) => setForm(previous => ({ ...previous, [key]: value }));
@@ -29,7 +29,7 @@ export default function EvaluatorRegistration({ onSave, onCancel }: { onSave: (n
     }
     try {
       localStorage.setItem(storageKey, JSON.stringify(evaluator));
-      onSave(evaluator.name);
+      onSave(evaluator.name, evaluator.role);
     } catch { setError('Não foi possível guardar os dados neste navegador. Verifique se o armazenamento está disponível e tente novamente.'); }
   };
   return <main className="evaluator-registration mx-auto min-h-screen max-w-[950px] px-5 py-8 sm:px-8">

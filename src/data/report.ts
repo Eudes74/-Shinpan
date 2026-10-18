@@ -6,6 +6,7 @@ export type ReportForm = {
   current: Category;
   target: Category;
   evaluator: string;
+  evaluatorRole?: string;
   event: string;
   eventId?: string;
   eventLocation?: string;

@@ -39,7 +39,7 @@ export const severityLabels: Record<Severity, string> = { leve: 'Leve', medio: '
 export const fightTotal = 20;
 export type Role = '' | 'C' | 'L' | 'V';
 export const roleLabels: Record<Role, string> = { '': 'Selecionar', C: 'Central', L: 'Lateral', V: 'Vídeo' };
-export type Fight = { number: number; role: Role; counts: Record<string, number>; verified: boolean };
+export type Fight = { number: number; role: Role; counts: Record<string, number>; verified: boolean; notes?: string };
 export const createFights = (): Fight[] => Array.from({ length: fightTotal }, (_, i) => ({ number: i + 1, role: '', counts: {}, verified: false }));
 export const fightDeduction = (fight: Fight) => errors.reduce((sum, item) => sum + (fight.counts[item.id] ?? 0) * points[item.severity], 0);
 export function aggregateCounts(fights: Fight[]): Record<string, number> {
@@ -56,6 +56,6 @@ export function restoreFights(value: unknown): Fight[] {
       const count = row.counts?.[item.id];
       return [item.id, Number.isSafeInteger(count) && count >= 0 ? count : 0];
     }));
-    return { ...fight, role, counts, verified: role !== '' && row.verified === true };
+    return { ...fight, role, counts, verified: role !== '' && row.verified === true, notes: typeof row.notes === 'string' ? row.notes : '' };
   });
 }
