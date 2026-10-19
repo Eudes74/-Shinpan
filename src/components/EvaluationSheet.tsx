@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatEventDate } from '../data/events';
 import { CheckCircle2, Plus, ShieldAlert, X } from 'lucide-react';
-import { errors, fightDeduction, fightTotal, points, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
+import { errors, fightDeduction, fightTotal, points, quickErrors, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
 import { approvalLabels, getResult, type ReportForm } from '../data/report';
 
 type Props = {
@@ -31,7 +31,7 @@ function ErrorPicker({ fight, onSelect, onClose }: { fight: Fight; onSelect: (it
       </header>
       <div className="picker-groups">{severities.map(severity => <section key={severity} className={`picker-group tone-${severity}`} aria-labelledby={`group-${severity}`}>
         <h3 id={`group-${severity}`}><span>{groupLabels[severity]}</span><small>−{points[severity]} pts cada</small></h3>
-        <div className="picker-options">{errors.filter(item => item.severity === severity).map(item => <button key={item.id} type="button" onClick={() => onSelect(item)}><span>{item.label}</span><Plus size={19} aria-hidden="true" /></button>)}</div>
+        <div className="picker-options">{errors.filter(item => item.severity === severity && !quickErrors.some(quick => quick.id === item.id)).map(item => <button key={item.id} type="button" onClick={() => onSelect(item)}><span>{item.label}</span><Plus size={19} aria-hidden="true" /></button>)}</div>
       </section>)}</div>
       <footer className="picker-footer">Cada seleção adiciona uma ocorrência. Para repetir a infração, abra novamente; para corrigir, use o × na tag.</footer>
     </div>
@@ -93,7 +93,26 @@ export default function EvaluationSheet({ fights, onChange, identification, even
             <div className="mb-4 flex items-center justify-between gap-3"><h3 id={`fight-${fight.number}`} className="text-lg font-black">Luta {String(fight.number).padStart(2, '0')}</h3><span className={`fight-state inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${fight.verified ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>{fight.verified && <CheckCircle2 size={14} aria-hidden="true" />}{fight.verified ? 'Concluído' : 'Pendente'}</span></div>
             <div className="fight-digital">
             {readOnly ? <p className="mb-4 text-sm text-slate-600">Função: <strong>{fight.role ? roleLabels[fight.role] : 'Não selecionada'}</strong></p> : <fieldset className="mb-4"><legend className="mb-2 text-xs font-bold text-slate-600">Função do árbitro</legend><div className="grid grid-cols-3 gap-2">{(['C', 'L', 'V'] as const).map(role => <label key={role} className="relative cursor-pointer"><input className="peer sr-only" type="radio" name={`role-${fight.number}`} value={role} checked={fight.role === role} onChange={() => onChange(index, { ...fight, role, verified: false })} /><span className="flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-2 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-800 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-indigo-500">{roleLabels[role]}</span></label>)}</div></fieldset>}
+            <div className="mb-4 grid gap-3" aria-label={`Marcação rápida de infrações da luta ${fight.number}`}>
+              {quickErrors.map(item => {
+                const quantity = fight.counts[item.id] ?? 0;
+                const label = item.severity === 'medio' ? 'Médio' : severityLabels[item.severity];
+                const descriptionId = `fight-${fight.number}-${item.id}-description`;
+                return <fieldset key={item.id} className={`referee-counter tone-${item.severity} min-w-0 rounded-xl border px-3 pb-3`} aria-describedby={descriptionId}>
+                  <legend className="px-1 text-sm font-bold">{label} (−{points[item.severity]} pts)</legend>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold">qtd: {quantity}</span>
+                    {Array.from({ length: 3 }, (_, slot) => <label key={slot} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-current/20 bg-white/70">
+                      <input type="checkbox" className="h-5 w-5 accent-indigo-700" checked={quantity > slot} disabled={readOnly} aria-label={`${label}: ${slot + 1} ocorrência${slot ? 's' : ''} na luta ${fight.number}`} onChange={() => setCount(index, item.id, quantity > slot ? slot : slot + 1)} />
+                    </label>)}
+                    {!readOnly && <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-current/20 bg-white/70 hover:bg-white" aria-label={`Adicionar uma ocorrência de ${label} na luta ${fight.number}`} onClick={() => setCount(index, item.id, quantity + 1)}><Plus size={17} aria-hidden="true" /></button>}
+                  </div>
+                  <p id={descriptionId} className="mt-2 break-words text-sm leading-relaxed">{item.description}</p>
+                </fieldset>;
+              })}
+            </div>
             {!readOnly && <button type="button" className="mb-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700" aria-label={`Registar infração ou erro na luta ${fight.number}`} aria-haspopup="dialog" onClick={() => setActiveIndex(index)}><Plus size={19} className="shrink-0" aria-hidden="true" />Registar Infração / Erro</button>}
+            <h4 className="mb-2 text-xs font-bold text-slate-600">Infrações registradas</h4>
             {recorded.length ? <ul className="flex flex-col gap-2" aria-label={`Infrações registadas na luta ${fight.number}`}>{recorded.map(item => <li key={item.id} className={`referee-tag tone-${item.severity} flex items-center justify-between gap-2 rounded-xl border py-1 pl-3 pr-1 text-sm`}><span className="min-w-0 break-words py-1">{item.label}{fight.counts[item.id] > 1 && <b> ×{fight.counts[item.id]}</b>}<span className="whitespace-nowrap font-bold"> (−{points[item.severity] * fight.counts[item.id]} pts)</span></span>{!readOnly && <button type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-black/10" aria-label={`Remover uma ocorrência de ${item.label} da luta ${fight.number}`} title="Remover uma ocorrência" onClick={() => setCount(index, item.id, fight.counts[item.id] - 1)}><X size={18} aria-hidden="true" /></button>}</li>)}</ul> : <p className="rounded-xl border border-dashed border-slate-200 p-3 text-sm text-slate-500">Nenhuma infração registada.</p>}
             {readOnly ? (fight.notes?.trim() && <p className="mt-4 whitespace-pre-wrap break-words text-sm text-slate-600"><strong>Observações:</strong> {fight.notes}</p>) : <label className="mt-4 block text-xs font-bold text-slate-600">Observações da luta<textarea rows={2} maxLength={2000} value={fight.notes || ''} onChange={event => onChange(index, { ...fight, notes: event.target.value })} placeholder="Lance, contexto ou orientação ao árbitro..." className="mt-2 block w-full resize-y rounded-lg border border-slate-300 bg-white p-3 text-sm font-normal text-slate-800 focus:border-indigo-500 focus:outline-indigo-500" /></label>}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3"><div><p className="text-xs font-bold text-slate-500">Subtotal da luta</p><p className={`text-xl font-black tabular-nums ${deduction ? 'text-red-700' : 'text-slate-700'}`}>{deduction ? `−${deduction}` : '0'} <span className="text-xs font-medium">pts</span></p></div>{readOnly ? <span className="text-sm font-bold">{fight.verified ? '✓ Concluído / Visto' : 'Visto pendente'}</span> : <label className={`flex min-h-11 items-center gap-2 text-sm font-bold ${fight.role ? 'cursor-pointer text-slate-700' : 'text-slate-400'}`} title={fight.role ? 'Confirmar este combate' : 'Selecione a função antes de concluir'}><input type="checkbox" className="h-5 w-5 accent-emerald-700" checked={fight.verified} disabled={!fight.role} aria-label={`Concluído / Visto da luta ${fight.number}`} onChange={event => onChange(index, { ...fight, verified: event.target.checked })} />Concluído / Visto</label>}</div>

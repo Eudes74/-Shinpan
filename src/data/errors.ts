@@ -27,13 +27,19 @@ export const CRITERIOS = [
   { id: 'GG4', categoria: 'GRAVISSIMA', pontos: 20, label: 'Ignorar correção mandatória do Vídeo Replay' },
 ] as const;
 const categorySeverity: Record<typeof CRITERIOS[number]['categoria'], Severity> = { LEVE: 'leve', MEDIA: 'medio', GRAVE: 'grave', GRAVISSIMA: 'gravissimo' };
-export const errors: ErrorItem[] = CRITERIOS.map(item => ({
+export const quickErrors: (ErrorItem & { description: string })[] = [
+  { id: 'L', label: 'Leve (marcação rápida)', severity: 'leve', group: 'posicionamento', description: 'Posicionamento / comando verbal' },
+  { id: 'M', label: 'Médio (marcação rápida)', severity: 'medio', group: 'gestual', description: 'Erro gestual' },
+  { id: 'G', label: 'Grave (marcação rápida)', severity: 'grave', group: 'regras', description: 'Ataque falso ignorado / pontuação equivocada' },
+  { id: 'GG', label: 'Gravíssima (marcação rápida)', severity: 'gravissimo', group: 'seguranca', description: 'Integridade física / resultado alterado' },
+];
+export const errors: ErrorItem[] = [...CRITERIOS.map(item => ({
   id: item.id,
   label: item.label,
   severity: categorySeverity[item.categoria],
-  group: item.id === 'L1' ? 'posicionamento' : item.id === 'L2' ? 'gestual' : item.id === 'GG2' || item.id === 'GG3' ? 'seguranca' : 'regras',
+  group: (item.id === 'L1' ? 'posicionamento' : item.id === 'L2' ? 'gestual' : item.id === 'GG2' || item.id === 'GG3' ? 'seguranca' : 'regras') as GroupId,
   safety: item.id === 'GG2' || item.id === 'GG3',
-}));
+})), ...quickErrors];
 export const points: Record<Severity, number> = { leve: 2, medio: 5, grave: 10, gravissimo: 20 };
 export const severityLabels: Record<Severity, string> = { leve: 'Leve', medio: 'Média', grave: 'Grave', gravissimo: 'Gravíssima' };
 export const fightTotal = 20;
