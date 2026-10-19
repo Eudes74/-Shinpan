@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatEventDate } from '../data/events';
-import { CheckCircle2, Plus, ShieldAlert, X } from 'lucide-react';
-import { errors, fightDeduction, fightTotal, points, quickErrors, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
-import { approvalLabels, getResult, type ReportForm } from '../data/report';
+import { CheckCircle2, Plus, X } from 'lucide-react';
+import { errors, fightDeduction, fightScore, fightTotal, points, quickErrors, roleLabels, severityLabels, type ErrorItem, type Fight, type Severity } from '../data/errors';
+import { approvalLabels, formatScore, getResult, minimumScore, type ReportForm } from '../data/report';
 
 type Props = {
   fights: Fight[];
@@ -43,10 +43,11 @@ export default function EvaluationSheet({ fights, onChange, identification, even
   const result = getResult(fights);
   const hasEvaluationData = fights.some(fight => fight.role || fight.verified) || result.total > 0;
   const sheetStatuses = [
-    { label: 'Aprovado FIJ', checked: result.complete && result.approval === 'fij' },
-    { label: 'Em Avaliação', checked: !result.complete && !result.veto },
-    { label: 'Reprovado', checked: result.veto || (result.complete && result.approval === 'failed') },
+    { label: 'Aprovado', checked: result.approval === 'approved' },
+    { label: 'Em Avaliação', checked: !result.complete },
+    { label: 'Reprovado', checked: result.approval === 'failed' },
   ];
+  const meanLabel = result.validated ? formatScore(result.score) : '—';
   const totals = [result.light, result.medium, result.grave, result.gravissimo];
   const activeFight = activeIndex === null ? undefined : fights[activeIndex];
   const setCount = (index: number, id: string, value: number) => {
@@ -70,20 +71,19 @@ export default function EvaluationSheet({ fights, onChange, identification, even
           <div className="sheet-statuses" aria-label="Status da avaliação"><strong>Status:</strong>{sheetStatuses.map(status => <span key={status.label} className="sheet-status-option"><span className="sheet-status-box" aria-hidden="true">{hasEvaluationData && status.checked ? '✓' : ''}</span>{status.label}{hasEvaluationData && status.checked && <span className="sr-only"> (marcado)</span>}</span>)}</div>
         </div>
         <div className="sheet-score-grid" aria-label="Resumo de pontuação" aria-live="polite" aria-atomic="true">
-          <div className="sheet-score"><span>Nota Inicial:</span><strong>[ 100 ]</strong></div>
-          <div className="sheet-score"><span>Total de Deduções:</span><strong><span className={hasEvaluationData ? '' : 'sheet-auto-value'}>[ −{result.deduction} pts ]</span>{!hasEvaluationData && <span className="sheet-manual-value">[ −____ pts ]</span>}</strong></div>
-          <div className="sheet-score sheet-final-score"><span>Nota Final:</span><strong><span className={hasEvaluationData ? '' : 'sheet-auto-value'}>[ {result.score} / 100 ]</span>{!hasEvaluationData && <span className="sheet-manual-value">[ _____ / 100 ]</span>}</strong></div>
+          <div className="sheet-score"><span>Base por luta:</span><strong>100 pts</strong></div>
+          <div className="sheet-score"><span>Nota mínima exigida:</span><strong>{minimumScore}%</strong></div>
+          <div className="sheet-score sheet-final-score"><span>{result.complete ? 'Média Final:' : 'Média Atual:'}</span><strong>[ {meanLabel} ] / 100</strong></div>
         </div>
-        <div className="no-print mt-3 flex flex-wrap items-center justify-between gap-2">
-          <div><p className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-extrabold ${result.approval === 'failed' ? 'border-red-300 bg-red-50 text-red-800' : 'border-emerald-300 bg-emerald-50 text-emerald-800'}`} role="status">{approvalLabels[result.approval]}</p><span className="ml-2 text-xs text-slate-500">{result.complete ? 'Resultado final' : 'Status provisório'}</span></div>
-          <p className="text-xs text-slate-500"><strong className="text-slate-800">{result.validated} / {fightTotal}</strong> combates concluídos</p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2" aria-live="polite">
+          <p className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-extrabold ${result.approval === 'failed' ? 'border-red-300 bg-red-50 text-red-800' : result.approval === 'approved' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-900'}`} role="status">{result.complete ? approvalLabels[result.approval] : result.validated ? `Em Avaliação (Média Parcial: ${meanLabel}%)` : 'Em Avaliação — aguardando a primeira luta concluída'}</p>
+          <p className="text-xs text-slate-500"><strong className="text-slate-800">{result.validated} / {fightTotal}</strong> lutas concluídas</p>
         </div>
       </div>
       <div className="no-print grid grid-cols-4 gap-1.5 px-3 pb-3 sm:gap-3 sm:px-6" aria-label="Infrações por categoria">{severities.map((severity, index) => <div key={severity} className={`referee-counter tone-${severity} flex flex-col items-center justify-center gap-1 rounded-xl border p-2 sm:flex-row sm:justify-between sm:px-3`}><span className="text-center text-[10px] font-bold sm:text-xs">{severityLabels[severity]}s <span className="hidden sm:inline">(−{points[severity]})</span></span><strong className="text-xl font-black leading-none tabular-nums">{totals[index]}</strong></div>)}</div>
-      {result.veto && <div className="referee-critical flex items-center gap-3 border-t border-red-900 bg-red-700 px-4 py-3 text-white sm:px-6" role="alert"><ShieldAlert size={24} className="shrink-0" aria-hidden="true" /><div><strong className="block text-xs font-black sm:text-sm">REPROVAÇÃO AUTOMÁTICA (2+ Faltas Gravíssimas)</strong><p className="mt-1 text-xs">{result.gravissimo} ocorrências acumuladas na avaliação.</p></div></div>}
     </header>
     <div className="fight-pages p-3 sm:p-6">
-      <div className="no-print mb-5"><h2 className="text-lg font-extrabold sm:text-xl">Combates · Avaliação prática</h2><p className="mt-1 text-sm text-slate-600">FIJ / CBJ · 20 lutas · FIJ: 85+ pontos · CBJ: 80 a 84 pontos</p>{!readOnly && <p className="mt-2 text-sm leading-relaxed text-slate-600">Selecione a função, registe as infrações pelo nome e marque o visto. Alterar a função ou as infrações retira o visto.</p>}</div>
+      <div className="no-print mb-5"><h2 className="text-lg font-extrabold sm:text-xl">Combates · Avaliação prática</h2><p className="mt-1 text-sm text-slate-600">20 lutas · 100 pontos por luta · Aprovação com média final de {minimumScore}% ou mais. Apenas lutas concluídas entram na média.</p>{!readOnly && <p className="mt-2 text-sm leading-relaxed text-slate-600">Selecione a função, registe as infrações pelo nome e marque o visto. Alterar a função ou as infrações retira o visto e exclui a luta da média até validá-la novamente.</p>}</div>
       {[0, 10].map(start => <div key={start} className="fight-grid grid items-start gap-4 xl:grid-cols-2">
         {fights.slice(start, start + 10).map((fight, offset) => {
           const index = start + offset;
@@ -115,7 +115,7 @@ export default function EvaluationSheet({ fights, onChange, identification, even
             <h4 className="mb-2 text-xs font-bold text-slate-600">Infrações registradas</h4>
             {recorded.length ? <ul className="flex flex-col gap-2" aria-label={`Infrações registadas na luta ${fight.number}`}>{recorded.map(item => <li key={item.id} className={`referee-tag tone-${item.severity} flex items-center justify-between gap-2 rounded-xl border py-1 pl-3 pr-1 text-sm`}><span className="min-w-0 break-words py-1">{item.label}{fight.counts[item.id] > 1 && <b> ×{fight.counts[item.id]}</b>}<span className="whitespace-nowrap font-bold"> (−{points[item.severity] * fight.counts[item.id]} pts)</span></span>{!readOnly && <button type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-black/10" aria-label={`Remover uma ocorrência de ${item.label} da luta ${fight.number}`} title="Remover uma ocorrência" onClick={() => setCount(index, item.id, fight.counts[item.id] - 1)}><X size={18} aria-hidden="true" /></button>}</li>)}</ul> : <p className="rounded-xl border border-dashed border-slate-200 p-3 text-sm text-slate-500">Nenhuma infração registada.</p>}
             {readOnly ? (fight.notes?.trim() && <p className="mt-4 whitespace-pre-wrap break-words text-sm text-slate-600"><strong>Observações:</strong> {fight.notes}</p>) : <label className="mt-4 block text-xs font-bold text-slate-600">Observações da luta<textarea rows={2} maxLength={2000} value={fight.notes || ''} onChange={event => onChange(index, { ...fight, notes: event.target.value })} placeholder="Lance, contexto ou orientação ao árbitro..." className="mt-2 block w-full resize-y rounded-lg border border-slate-300 bg-white p-3 text-sm font-normal text-slate-800 focus:border-indigo-500 focus:outline-indigo-500" /></label>}
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3"><div><p className="text-xs font-bold text-slate-500">Subtotal da luta</p><p className={`text-xl font-black tabular-nums ${deduction ? 'text-red-700' : 'text-slate-700'}`}>{deduction ? `−${deduction}` : '0'} <span className="text-xs font-medium">pts</span></p></div>{readOnly ? <span className="text-sm font-bold">{fight.verified ? '✓ Concluído / Visto' : 'Visto pendente'}</span> : <label className={`flex min-h-11 items-center gap-2 text-sm font-bold ${fight.role ? 'cursor-pointer text-slate-700' : 'text-slate-400'}`} title={fight.role ? 'Confirmar este combate' : 'Selecione a função antes de concluir'}><input type="checkbox" className="h-5 w-5 accent-emerald-700" checked={fight.verified} disabled={!fight.role} aria-label={`Concluído / Visto da luta ${fight.number}`} onChange={event => onChange(index, { ...fight, verified: event.target.checked })} />Concluído / Visto</label>}</div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3" aria-live="polite"><div><p className={`text-sm font-bold ${deduction ? 'text-red-700' : 'text-slate-600'}`}>Subtotal Deduções: −{deduction} pts</p><p className="mt-1 text-xl font-black tabular-nums text-slate-900">Nota da Luta: {fightScore(fight)} / 100</p><p className="mt-1 text-xs text-slate-500">{fight.role && fight.verified ? 'Incluída na média.' : 'Pendente — fora da média até concluir e marcar o visto.'}</p></div>{readOnly ? <span className="text-sm font-bold">{fight.verified ? '✓ Concluído / Visto' : 'Visto pendente'}</span> : <label className={`flex min-h-11 items-center gap-2 text-sm font-bold ${fight.role ? 'cursor-pointer text-slate-700' : 'text-slate-400'}`} title={fight.role ? 'Confirmar este combate' : 'Selecione a função antes de concluir'}><input type="checkbox" className="h-5 w-5 accent-emerald-700" checked={fight.verified} disabled={!fight.role} aria-label={`Concluído / Visto da luta ${fight.number}`} onChange={event => onChange(index, { ...fight, verified: event.target.checked })} />Concluído / Visto</label>}</div>
             </div>
             <div className="fight-manual" aria-label={`Campos para preenchimento à caneta da luta ${fight.number}`}>
               <p className="fight-manual-hint no-print">Preenchimento manual / impressão</p>
@@ -127,7 +127,8 @@ export default function EvaluationSheet({ fights, onChange, identification, even
                 <span className="fight-manual-option"><span className="fight-manual-box" aria-hidden="true" />Gravíssima</span>
               </div>
               <div className="fight-manual-note">Lance: <span aria-label="Linha para anotação do lance" /></div>
-              <div className="fight-manual-deduction"><strong>Dedução:</strong><span>[ −____ pts ]</span></div>
+              <div className="fight-manual-deduction"><strong>Subtotal Deduções:</strong><span>[ −____ pts ]</span></div>
+              <div className="mt-1 font-bold">Nota da Luta: [ ____ / 100 ]</div>
             </div>
           </article>;
         })}

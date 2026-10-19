@@ -48,6 +48,7 @@ export const roleLabels: Record<Role, string> = { '': 'Selecionar', C: 'Central'
 export type Fight = { number: number; role: Role; counts: Record<string, number>; verified: boolean; notes?: string };
 export const createFights = (): Fight[] => Array.from({ length: fightTotal }, (_, i) => ({ number: i + 1, role: '', counts: {}, verified: false }));
 export const fightDeduction = (fight: Fight) => errors.reduce((sum, item) => sum + (fight.counts[item.id] ?? 0) * points[item.severity], 0);
+export const fightScore = (fight: Fight) => Math.max(0, 100 - fightDeduction(fight));
 export function aggregateCounts(fights: Fight[]): Record<string, number> {
   return Object.fromEntries(errors.map(item => [item.id, fights.reduce((sum, fight) => sum + (fight.counts[item.id] ?? 0), 0)]));
 }

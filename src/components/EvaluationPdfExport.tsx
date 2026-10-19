@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ExternalLink, FileDown, Loader2, Mail } from 'lucide-react';
 import type { Fight } from '../data/errors';
 import { formatEventDate } from '../data/events';
-import { approvalLabels, getResult, type ReportForm } from '../data/report';
+import { approvalLabels, formatScore, getResult, minimumScore, type ReportForm } from '../data/report';
 import type { EvaluationPdf } from '../lib/evaluationPdf';
 
 type Props = { form: ReportForm; fights: Fight[]; notes: string; onCandidateEmailChange: (email: string) => void };
@@ -27,8 +27,9 @@ export default function EvaluationPdfExport({ form, fights, notes, onCandidateEm
     `Local: ${form.eventLocation || 'Não informado'}`,
     `Data: ${formatEventDate(form.date || form.eventStartDate) || 'Não informada'} | Tatame / Área: ${form.tatami}`,
     `Categoria / Exame: ${form.current} → ${form.target}`,
-    `Nota final: ${result.score} / 100 | Deduções: ${result.deduction} pontos`,
-    `Resultado: ${approvalLabels[result.approval]}`,
+    `Média Geral Obtida: ${formatScore(result.score)}% | Nota Mínima Exigida: ${minimumScore}%`,
+    `Lutas concluídas: ${result.validated} / 20`,
+    `Resultado Final: ${approvalLabels[result.approval].toUpperCase()}`, 
     `Documento: ${download?.filename || ''}`,
     '',
     'Atenciosamente,',

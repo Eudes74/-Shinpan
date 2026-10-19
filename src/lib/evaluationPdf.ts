@@ -1,8 +1,8 @@
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
-import { errors, fightDeduction, fightTotal, points, roleLabels, severityLabels, type Fight } from '../data/errors';
+import { errors, fightDeduction, fightScore, fightTotal, points, roleLabels, severityLabels, type Fight } from '../data/errors';
 import { formatEventDate } from '../data/events';
-import { approvalLabels, getResult, type ReportForm } from '../data/report';
+import { approvalLabels, formatScore, getResult, minimumScore, type ReportForm } from '../data/report';
 
 export type EvaluationPdf = { blob: Blob; filename: string; pages: number };
 const margin = 14;
@@ -45,7 +45,7 @@ export function generateEvaluationPdf(form: ReportForm, fights: Fight[], notes: 
   const tableEnd = () => {
     y = ((doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y) + 5;
   };
-  const section = (title: string, rows: string[][]) => {
+  const section = (title: string, rows: string[][], highlightResult = false) => {
     autoTable(doc, {
       startY: y,
       margin: { top, bottom, left: margin, right: margin },
@@ -54,6 +54,16 @@ export function generateEvaluationPdf(form: ReportForm, fights: Fight[], notes: 
       body: rows,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, textColor: [20, 30, 45], lineColor: [190, 195, 200], lineWidth: 0.15, overflow: 'linebreak', valign: 'top' },
       headStyles: { fillColor: [232, 236, 241], textColor: [20, 30, 45], fontStyle: 'bold' },
+      didParseCell: data => {
+        if (highlightResult && data.section === 'body' && data.row.index < 3) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontSize = 11;
+          data.cell.styles.fillColor = [243, 246, 249];
+          if (data.row.index === 2) {
+            data.cell.styles.textColor = result.approval === 'approved' ? [20, 110, 60] : [170, 30, 40];
+          }
+        }
+      },
       rowPageBreak: 'avoid',
     });
     tableEnd();
@@ -73,13 +83,16 @@ export function generateEvaluationPdf(form: ReportForm, fights: Fight[], notes: 
     [`Função do avaliador no evento: ${value(form.evaluatorRole)}`],
   ]);
   section('RESUMO DO RESULTADO', [
-    ['Pontuação inicial: 100', `Deduções: -${result.deduction} pts`, `Nota final: ${result.score} / 100`],
-    [`Status: ${result.complete ? approvalLabels[result.approval] : 'Em Avaliação'}`, `Combates validados: ${result.validated} / ${fightTotal}`, `Infrações: ${result.total}`],
-    [`Leves: ${result.light} | Médias: ${result.medium}`, `Graves: ${result.grave}`, `Gravíssimas: ${result.gravissimo}`],
-  ]);
+    [`Média Geral Obtida: ${formatScore(result.score)}%`],
+    [`Nota Mínima Exigida: ${minimumScore}%`],
+    [`Resultado Final: ${approvalLabels[result.approval].toUpperCase()}`],
+    [`Lutas concluídas: ${result.validated} / ${fightTotal} | Infrações: ${result.total}`],
+    [`Leves: ${result.light} | Médias: ${result.medium} | Graves: ${result.grave} | Gravíssimas: ${result.gravissimo}`],
+  ], true);
   section('CRITÉRIOS DE APURAÇÃO', [
-    ['Aprovado FIJ: 85 pontos ou mais. Aprovado CBJ: 80 a 84 pontos. Reprovado: abaixo de 80 pontos. Duas ou mais faltas gravíssimas implicam reprovação automática, independentemente da nota.'],
-    [result.veto ? `REPROVAÇÃO AUTOMÁTICA: ${result.gravissimo} faltas gravíssimas registradas.` : 'Sem veto por faltas gravíssimas. Resultado final apurado sobre os 20 combates validados.'],
+    ['Cada luta começa com 100 pontos. Deduções na própria luta: Leve -2; Média -5; Grave -10; Gravíssima -20 pontos. A nota de cada luta nunca é inferior a 0.'],
+    [`Média Final = soma das notas das lutas concluídas / total de lutas concluídas. Soma das notas: ${result.scoreSum}; lutas concluídas: ${result.validated}.`],
+    [`Após as ${fightTotal} lutas com função definida e visto: média maior ou igual a ${minimumScore}% = APROVADO; abaixo de ${minimumScore}% = REPROVADO. Não há reprovação automática por quantidade de infrações.`],
   ]);
   doc.addPage();
   y = top;
@@ -87,7 +100,7 @@ export function generateEvaluationPdf(form: ReportForm, fights: Fight[], notes: 
     startY: y,
     margin: { top, bottom, left: margin, right: margin },
     theme: 'grid',
-    head: [['Luta Nº', 'Função exercida', 'Infrações registradas e deduções', 'Total', 'Observações / Visto']],
+    head: [['Luta Nº', 'Função exercida', 'Infrações registradas e deduções', 'Subtotal Deduções', 'Nota da Luta (0-100)', 'Observações / Visto']],
     body: fights.map(fight => {
       const entries = errors.filter(item => (fight.counts[item.id] ?? 0) > 0).map(item => {
         const quantity = fight.counts[item.id];
@@ -98,12 +111,13 @@ export function generateEvaluationPdf(form: ReportForm, fights: Fight[], notes: 
         fight.role ? roleLabels[fight.role] : 'Não informada',
         entries.join('\n\n') || 'Nenhuma infração registrada.',
         `-${fightDeduction(fight)} pts`,
+        `${fightScore(fight)} / 100`,
         `${fight.notes?.trim() || 'Sem observações.'}\n\nVisto: ${fight.verified ? 'Concluído' : 'Pendente'}`,
       ];
     }),
     styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, textColor: [20, 30, 45], lineColor: [190, 195, 200], lineWidth: 0.15, overflow: 'linebreak', valign: 'top' },
     headStyles: { fillColor: [232, 236, 241], textColor: [20, 30, 45], fontStyle: 'bold' },
-    columnStyles: { 0: { cellWidth: 13 }, 1: { cellWidth: 22 }, 2: { cellWidth: 91 }, 3: { cellWidth: 17 }, 4: { cellWidth: 39 } },
+    columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 21 }, 2: { cellWidth: 76 }, 3: { cellWidth: 20 }, 4: { cellWidth: 21, fontStyle: 'bold', halign: 'center' }, 5: { cellWidth: 32 } },
     rowPageBreak: 'avoid',
     showHead: 'everyPage',
   });
