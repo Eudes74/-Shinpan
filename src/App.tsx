@@ -7,6 +7,7 @@ import EvaluationSheet from './components/EvaluationSheet';
 import EvaluatorRegistration from './components/EvaluatorRegistration';
 import EventManager from './components/EventManager';
 import EventFields from './components/EventFields';
+import SimultaneousEvaluation from './components/SimultaneousEvaluation';
 import { applyEvent, eventStorageKey, loadEventStore, type CompetitionEvent, type EventStore } from './data/events';
 
 const storageKey = 'shinpan-avaliacao-v2';
@@ -49,6 +50,7 @@ export default function App() {
   const [eventError, setEventError] = useState('');
   const [showEvaluatorRegistration, setShowEvaluatorRegistration] = useState(false);
   const [evaluatorSaved, setEvaluatorSaved] = useState(false);
+  const [showSimultaneous, setShowSimultaneous] = useState(false);
   const { screen, form, fights, notes, legacyNotice } = session;
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(session)); } catch { /* armazenamento indisponível */ } }, [session]);
   const result = getResult(fights);
@@ -92,6 +94,14 @@ export default function App() {
   const eventFields = <EventFields form={form} events={eventStore.events} onSelect={selectEvent} onNew={() => setEventManager({ createNew: true })} onDateChange={date => updateForm('date', date)} onTatamiChange={tatami => updateForm('tatami', tatami)} light />;
   if (showEvaluatorRegistration) return <div className="min-h-screen bg-[#080e13] text-slate-100"><EvaluatorRegistration onCancel={() => setShowEvaluatorRegistration(false)} onSave={(name, role) => { setSession(prev => ({ ...prev, form: { ...prev.form, evaluator: name, evaluatorRole: role } })); setShowEvaluatorRegistration(false); setEvaluatorSaved(true); }} /></div>;
   return <div className="min-h-screen bg-ink text-slate-100">
+    <nav aria-label="Modo de avaliação" className="no-print mx-auto flex max-w-6xl flex-wrap gap-2 px-4 py-3 sm:px-8">
+      <button type="button" aria-pressed={!showSimultaneous} onClick={() => setShowSimultaneous(false)} className={`secondary-button ${!showSimultaneous ? 'border-indigo-400 text-indigo-300' : ''}`}>Avaliação por luta</button>
+      <button type="button" aria-pressed={showSimultaneous} onClick={() => setShowSimultaneous(true)} className={`secondary-button ${showSimultaneous ? 'border-cyan-500 text-cyan-300' : ''}`}>Avaliação simultânea</button>
+    </nav>
+    <div hidden={!showSimultaneous}>
+      <SimultaneousEvaluation onBack={() => setShowSimultaneous(false)} event={form.event} tatami={form.tatami} />
+    </div>
+    <div hidden={showSimultaneous}>
     {legacyNotice && <div className="no-print mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm text-amber-200" role="status"><p>Há uma avaliação no modelo antigo salva neste dispositivo. Os dados de identificação foram mantidos; as ocorrências antigas não foram convertidas, pois não indicam a luta. O registro antigo permanece preservado neste navegador.</p><button type="button" className="secondary-button" onClick={() => setSession(prev => ({ ...prev, legacyNotice: false }))}>Entendi</button></div>}
     {screen === 'setup' && <>
       <header className="border-b border-line bg-[#0d1627]"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8"><Brand /><nav aria-label="Menu principal" className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => setEventManager({ createNew: false })}><CalendarDays size={17} />Eventos</button><button type="button" className="secondary-button" onClick={() => { setEvaluatorSaved(false); setShowEvaluatorRegistration(true); }}>Cadastrar avaliador <Plus size={17} /></button></nav></div></header>
@@ -113,5 +123,6 @@ export default function App() {
     {eventManager && <EventManager events={eventStore.events} activeEventId={eventStore.activeEventId} createNew={eventManager.createNew} storageError={eventError} onClose={() => setEventManager(null)} onSave={saveEvent} onActivate={activateEvent} onDelete={id => {
       persistEvents({ events: eventStore.events.filter(event => event.id !== id), activeEventId: eventStore.activeEventId === id ? '' : eventStore.activeEventId });
     }} />}
+    </div>
   </div>;
 }
